@@ -948,21 +948,30 @@ function triggerConfetti() {
     }
 }
 // REPLACE this function
+// REPLACE this function
 function showCongratsModal() {
     if (!congratsModal) return;
 
-    // --- [THE FIX] ---
-    // Set the delivery time text before showing the modal.
+    // Set the delivery time text
+    const congratsDeliveryTime = getEl('congrats-delivery-time');
     if (congratsDeliveryTime) {
         congratsDeliveryTime.innerHTML = 'Estimated Delivery: <strong>30-45 minutes</strong>';
     }
 
+    // --- [THE FIX] Manually control the animation ---
+    const lottiePlayer = getEl('congrats-animation');
+    if (lottiePlayer) {
+        // Go to the first frame and then play. This ensures it restarts every time.
+        lottiePlayer.seek(0);
+        lottiePlayer.play();
+    }
+    
     congratsModal.classList.add('visible');
     
-    // Auto-close after a longer duration to give them time to read.
+    // Auto-close after 5 seconds
     setTimeout(() => {
         closeCongratsModal();
-    }, 5000); // Increased to 5 seconds
+    }, 5000);
 }
 function closeCongratsModal() {
     if (!congratsModal) return;
@@ -1269,15 +1278,25 @@ function handleQuickViewAddToCart(e) {
     </div>
 </div>
 <div id="congrats-modal" class="modal">
-    <div class="modal-content !max-w-sm text-center">
-        <!-- You can find a better image later, this is a placeholder -->
+    <!-- [THE FIX] Added flexbox centering classes here -->
+    <div class="modal-content !max-w-sm text-center flex flex-col items-center justify-center">
+        
         <lottie-player 
-    src="/success.json" 
-    background="transparent" 
-    speed="1" 
-    style="width: 150px; height: 150px; margin: 0 auto;" 
-    autoplay>
-</lottie-player>        
+            id="congrats-animation"
+            src="./success.json" 
+            background="transparent" 
+            speed="1" 
+            style="width: 150px; height: 150px;" 
+            autoplay>
+        </lottie-player>
+        
+        <h3 class="text-3xl font-bold text-green-600 mb-2 mt-4">Congratulations!</h3>
+        <p class="text-gray-600 mb-2">Your order has been submitted successfully.</p>
+        <p id="congrats-delivery-time" class="text-gray-800 font-semibold mb-6"></p>
+        
+        <button id="close-congrats-btn" class="bg-green-600 text-white font-semibold py-2 px-8 rounded-full hover:bg-green-700 transition duration-300">Done</button>
+    </div>
+</div>      
         <h3 class="text-3xl font-bold text-green-600 mb-2">Congratulations!</h3>
         <p class="text-gray-600 mb-6">Your order has been submitted successfully.</p>
         <p id="congrats-delivery-time" class="text-gray-800 font-semibold"></p>  
