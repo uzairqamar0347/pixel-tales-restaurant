@@ -1,0 +1,1288 @@
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pixel Tales</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+    
+    <!-- Supabase library is correctly placed here -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+        <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f7fafc; /* A light, clean background */
+            color: #2d3748;
+            overflow-x: hidden; /* Prevent horizontal scrolling */
+        }
+        html {
+            scroll-behavior: smooth;
+        }
+        .menu-card {
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+            cursor: pointer;
+        }
+        .menu-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        .category-btn {
+    transition: all 0.2s ease-in-out;
+}
+.category-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 100;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+            overflow: auto;
+        }
+        .modal-content {
+            position: relative;
+            background-color: #fff;
+            padding: 2rem;
+            border-radius: 1rem;
+            width: 90%;
+            max-width: 600px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            animation-name: animatetop;
+            animation-duration: 0.4s;
+        }
+        #receipt-container {
+    z-index: 110; /* Higher than the cart modal's 100 */
+}
+#congrats-modal {
+    z-index: 120; /* Even higher, for the final pop-up */
+}
+        @keyframes animatetop {
+            from { top: -300px; opacity: 0; }
+            to { top: 0; opacity: 1; }
+        }
+
+        /* Red textured background for the menu section */
+       #menu {
+    background-color: black;
+    }
+    
+.fade-in-up {
+    animation: fadeInUp 1s ease-out forwards;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+#hero {
+        background-image: url('https://michaelfoods.com/wp-content/uploads/holy-chips-hero-desktop-fixed.jpg?semt=ais_hybrid&w=740&q=80?q=80&w=1920&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D');
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        height: 8 0vh; /* Full viewport height on desktop */
+    }
+
+    /* Mobile styles to shrink the hero section */
+    @media (max-width: 768px) {
+        #hero {
+            height: 40vh; /* Half the viewport height on mobile */
+        }
+    }
+    .quantity-btn-modern {
+    background-color: #f3f4f6; /* A light gray background */
+    border: 1px solid #d1d5db; /* A subtle border */
+    border-radius: 0.5rem; /* Rounded corners */
+    width: 2rem;
+    height: 2rem;
+    font-weight: 600;
+    color: #374151;
+    transition: background-color 0.2s, color 0.2s, transform 0.2s;
+    }
+    .quantity-btn-modern:hover {
+    background-color: #e5e7eb;
+    color: #1f2937;
+    transform: scale(1.1); /* Add this line for a subtle "pop" */
+}
+.quantity-btn-modern:hover {
+    background-color: #e5e7eb;
+    color: #1f2937;
+}
+.slide-in-down {
+    animation: slideInDown 1s ease-out forwards;
+}
+
+@keyframes slideInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+/* Animation for the pizza size selector */
+.size-selector {
+    transition: max-height 0.2s ease-in-out, opacity 0.2s ease-in-out, padding 0.2s ease-in-out;
+    max-height: 0;
+    opacity: 0;
+    overflow: hidden;
+    padding-top: 0;
+    padding-bottom: 0;
+}
+
+.size-selector.selector-open {
+    max-height: 500px; /* A value larger than the content's height */
+    opacity: 1;
+    /* Restore original vertical padding from p-4 */
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+}
+/* ===================================== */
+/* == NEW: CONFETTI EFFECT STYLES == */
+/* ===================================== */
+.confetti {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 10px;
+    height: 10px;
+    background-color: #f59e0b; /* Default yellow */
+    opacity: 0;
+    z-index: 130; /* Just behind the modal's z-index of 100 */
+    pointer-events: none; /* Make them unclickable */
+    animation: fall 4s ease-out forwards;
+}
+@keyframes fall {
+    0% {
+        transform: translateY(-10vh) rotateZ(0deg);
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(110vh) rotateZ(720deg);
+        opacity: 0;
+    }
+}
+.btn-success {
+    background-color: #16a34a !important; /* A nice green color from Tailwind */
+    color: white !important;
+    cursor: default !important; /* Make it look non-clickable temporarily */
+    transform: scale(1.05); /* Optional: a slight "pop" effect */
+    transition: all 0.3s ease-in-out;
+}
+.sticky-cart-container {
+    /* Hidden by default on all screens */
+    display: none; 
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    z-index: 90;
+    padding: 1rem;
+    background-color: #ea580c;
+    color: white;
+    box-shadow: 0 -4px 10px rgba(0,0,0,0.1);
+    cursor: pointer;
+    transform: translateY(100%);
+    transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+}
+.sticky-cart-container.visible {
+    transform: translateY(0%);
+}
+.pulse-btn {
+    animation: pulse 2.5s infinite;
+}
+@media (max-width: 768px) {
+    .sticky-cart-container {
+        display: flex;
+    }
+}
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(234, 88, 12, 0.7);
+    }
+    50% {
+        transform: scale(1.02);
+        box-shadow: 0 0 0 10px rgba(234, 88, 12, 0);
+    }
+}
+/* ===================================== */
+/* == NEW: HIDDEN RECEIPT FOR PRINTING == */
+/* ===================================== */
+#receipt-print-container {
+    position: absolute;
+    left: -9999px; /* Position it way off-screen */
+    top: 0;
+    width: 500px; /* Give it a fixed, clean width */
+    background-color: white;
+    padding: 2rem;
+    font-family: 'Inter', sans-serif;
+    color: #2d3748;
+}
+/* --- [NEW] Animation for the Congrats Modal --- */
+#congrats-modal .modal-content {
+    transform: scale(0.7);
+    opacity: 0;
+    transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease-in-out;
+}
+
+#congrats-modal.visible {
+    display: flex;
+}
+
+#congrats-modal.visible .modal-content {
+    transform: scale(1);
+    opacity: 1;
+}
+    </style>
+</head>
+<body class="antialiased"  >
+
+    <!-- Navigation Bar -->
+    <header class="bg-white shadow-sm sticky top-0 z-50"  >
+        <nav class="container mx-auto px-6 py-4 flex justify-between items-center"  >
+            <a href="#hero" class="text-6xl font-bold text-gray-800"  ><img src="https://img.freepik.com/premium-vector/burger-logo_1366-144.jpg" alt="Pixel Tales Logo" class="h-20"    ></a>
+            <div class="space-x-4 flex items-center"  >
+                <a href="#menu" class="text-gray-600 hover:text-orange-500 transition duration-300 hidden md:block"  >Menu</a>
+                <a href="#about" class="text-gray-600 hover:text-orange-500 transition duration-300 hidden md:block"  >About Us</a>
+                <a href="#contact" class="text-gray-600 hover:text-orange-500 transition duration-300 hidden md:block"  >Contact</a>
+                <button id="cartButton" class="bg-orange-500 text-white font-semibold py-2 px-4 rounded-full shadow-lg hover:bg-orange-600 transition duration-300 relative pulse-btn"  >
+                    Order Now (<span id="cartCount">0</span>)
+                </button>
+            </div>
+        </nav>
+    </header>
+    <section id="hero-slider" class="slide-in-down relative w-full h-[60vh] md:h-[70vh] overflow-hidden"  >
+    <div id="slides-container" class="flex h-full transition-transform duration-700 ease-in-out">
+        </div>
+        <div class="w-full h-full flex-shrink-0 relative"  >
+            </div>
+        </div>
+
+        <div class="w-full h-full flex-shrink-0 relative"  >
+     
+            </div>
+        </div>
+
+    </div>
+    <div id="slider-dots" class="absolute bottom-5 left-1/2 -translate-x-1/2 flex space-x-3"  >
+        </div>
+</section>
+    <section id="menu" class="py-20 text-white"  >
+    <div class="container mx-auto px-6"  >
+        <h2 class="text-4xl font-bold text-center mb-12"  >Our Menu</h2>        
+        <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-8"  >
+          <div class="relative w-full sm:w-1/3 mb-4 sm:mb-0"  >
+        <input type="text" id="search-bar" placeholder="Search for food..." class="w-full py-2 pl-10 pr-4 text-gray-800 bg-white rounded-full focus:outline-none focus:ring-2 focus:ring-orange-500"  >
+ <div class="absolute inset-y-0 left-0 flex items-center pl-3"  >
+            <i class="fas fa-search text-gray-400"  ></i>
+        </div>
+    </div>
+            <div class="flex flex-wrap justify-center gap-2 sm:gap-4 mb-4 sm:mb-0"  >
+                    <button class="category-btn bg-white text-red-900 px-4 py-2 rounded-full font-semibold hover:bg-gray-100 transition duration-300" data-category="deals"  >Deals</button>
+                <button class="category-btn bg-white text-red-900 px-4 py-2 rounded-full font-semibold hover:bg-gray-100 transition duration-300" data-category="pizza"  >Pizza</button>
+                <button class="category-btn bg-white text-red-900 px-4 py-2 rounded-full font-semibold hover:bg-gray-100 transition duration-300" data-category="burgers"  >Burgers</button>
+                <button class="category-btn bg-white text-red-900 px-4 py-2 rounded-full font-semibold hover:bg-gray-100 transition duration-300" data-category="side-dishes"  >Side Dishes</button>
+                <button class="category-btn bg-white text-red-900 px-4 py-2 rounded-full font-semibold hover:bg-gray-100 transition duration-300" data-category="fries"  >Fries</button>
+                <button class="category-btn bg-white text-red-900 px-4 py-2 rounded-full font-semibold hover:bg-gray-100 transition duration-300" data-category="beverages"  >Beverages</button>
+                <button class="category-btn bg-white text-red-900 px-4 py-2 rounded-full font-semibold hover:bg-gray-100 transition duration-300" data-category="drinks"  >Drinks</button>
+                <button class="category-btn bg-white text-red-900 px-4 py-2 rounded-full font-semibold hover:bg-gray-100 transition duration-300" data-category="desserts">Desserts</button>
+            </div>
+            
+            <div class="relative inline-block text-left"  >
+                <select id="sort-select" class="bg-white text-red-900 px-4 py-2 rounded-full font-semibold border-none focus:outline-none cursor-pointer block w-full bg-white border border-gray-300 text-gray-700 py-2 px-4 pr-8 rounded-full leading-tight focus:outline-none focus:bg-white focus:border-gray-500"  >
+                    <option value="default"  >Default Sort</option>
+                    <option value="price-asc"  >Price (Low to High)</option>
+                    <option value="price-desc"  >Price (High to Low)</option>
+                </select>
+            </div>
+        </div>
+<div id="menu-items-container" class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+    <p id="no-results-message" class="text-white text-center col-span-full hidden">No items match your search.</p>          
+    </div>
+</section>
+<section id="recent-orders" class="py-20 bg-gray-100">
+    <div class="container mx-auto px-6">
+        <h2 class="text-4xl font-bold text-center mb-12 text-gray-800">Your Recent Orders</h2>
+        <div id="recent-orders-container" class="max-w-4xl mx-auto space-y-4">
+            <!-- Recent orders will be dynamically inserted here by JavaScript -->
+            <p class="text-center text-gray-500">You have no recent orders yet!</p>
+        </div>
+    </div>
+</section>
+    <!-- About Us Section -->
+    <section id="about" class="relative py-20 bg-cover bg-center" style="background-image: url('https://images.unsplash.com/photo-1695457209904-872bc81b3a5e?q=80&w=1032&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D');" data-animation="fade-in-up"  >
+        <div class="absolute inset-0 bg-black opacity-40 shadow-2xl"  ></div>
+    <div class="container mx-auto px-6 text-center relative z-10"  >
+        <h2 class="text-4xl text-white font-bold mb-8"  >Our Story</h2>
+        <p class="text-lg text-white max-w-3xl mx-auto"  >
+            Founded in 2025, Pixel Tales was born out of a passion for creating delicious, wholesome food using locally sourced ingredients. Our chefs are dedicated to crafting memorable dining experiences, one dish at a time. We believe that great food brings people together.
+        </p>
+    </div>
+</section>
+
+   <section id="contact" class="relative py-20 relative bg-cover bg-center" style="background-image: url('https://plus.unsplash.com/premium_photo-1695762436987-1cf827e5f1dd?q=80&w=872&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D ');" data-animation="fade-in-up"  >
+    <div class="absolute inset-0 bg-black opacity-30 shadow-2xl"  ></div>
+    <div class="container mx-auto px-6 text-center relative z-10"  >
+        <h2 class="text-4xl font-bold mb-8 text-white"  >Contact Us</h2>
+        <p class="text-lg text-white mb-6"  >Reach out to us through the following options:</p>
+        <div class="grid grid-cols-2 gap-4 max-w-xl mx-auto"  >
+            <a href="tel:+923460714042" class="bg-green-600 text-white font-semibold p-8 rounded-lg shadow-lg hover:bg-green-600 transition duration-300 flex flex-col items-center justify-center space-y-2"  >
+                <i class="fas fa-phone-alt text-2xl"  ></i>
+                <span>Call Us</span>
+            </a>
+            <a href="mailto:uzairqamar0347@gmail.com" class="bg-red-500 text-white font-semibold p-8 rounded-lg shadow-lg hover:bg-red-900 transition duration-300 flex flex-col items-center justify-center space-y-2"  >
+                <i class="fas fa-envelope text-2xl"  ></i>
+                <span>Email Us</span>
+            </a>
+            <a href="https://maps.google.com/?q=Nizami+Homeopathic+Clinic" target="_blank" class="bg-red-800 text-white font-semibold p-8 rounded-lg shadow-lg hover:bg-red-600 transition duration-300 flex flex-col items-center justify-center space-y-2"  >
+                <i class="fas fa-map-marker-alt text-2xl"  ></i>
+                <span>View on Map</span>
+            </a>
+            <a href="https://wa.me/923460714042" target="_blank" class="bg-green-700 text-white font-semibold p-8 rounded-lg shadow-lg hover:bg-green-700 transition duration-300 flex flex-col items-center justify-center space-y-2"  >
+                <i class="fab fa-whatsapp text-2xl"  ></i>
+                <span>WhatsApp</span>
+            </a>
+        </div>
+    </div>
+</section>
+    <section id="location" class="relative py-10 relative" style="background-image: url('https://images.unsplash.com/photo-1662472460493-87a12773d731?q=80&w=870&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D'); background-size: cover; background-position: center;" data-animation="fade-in-up"  >
+    <div class="absolute inset-0 bg-black opacity-50 shadow-2xl"  ></div>
+    <div class="container mx-auto px-6 text-center text-white relative z-10"  >
+        <h2 class="text-4xl font-bold mb-8"  >Find Us</h2>
+        <p class="max-w-2xl mx-auto mb-10"  >Visit us at our location and enjoy our delicious food in person!</p>
+        
+        <div class="shadow-lg rounded-lg overflow-hidden relative bg-black bg-opacity-50" style="padding-bottom: 30%;"  >
+            <iframe 
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d427.61975298537095!2d72.48847114709355!3d30.971653564902113!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x39230fb7e895ee79%3A0x14a5fbdc0f10eaf2!2sNizami%20Homeopathic%20clinic!5e0!3m2!1sen!2s!4v1755320626427!5m2!1sen!2s" 
+                class="absolute inset-0 w-full h-full" 
+                style="border:0;" 
+                allowfullscreen="" 
+                      loading="lazy"  <!-- ADD THIS LINE -->
+                referrerpolicy="no-referrer-when-downgrade"
+            ></iframe>
+        </div>
+    </div>
+</section>
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white py-8"  >
+      <div class="container mx-auto px-6 text-center"  >
+                        <p>&copy; 2025 Pixel Tales. All Rights Reserved.</p>
+            <div class="mt-4 space-x-4"  >
+                <a href="#" class="hover:text-orange-500 transition duration-300"  >Privacy Policy</a>
+                <a href="#" class="hover:text-orange-500 transition duration-300"  >Terms of Service</a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Cart Modal -->
+    <div id="cartModal" class="modal"  >
+<div class="modal-content max-h-[90vh] overflow-y-auto"  >
+        <span id="closeModal" class="absolute top-4 right-4 text-gray-600 text-3xl font-bold cursor-pointer hover:text-gray-900"  >×</span>
+        <h3 class="text-3xl font-bold mb-6 text-center"  >Your Order</h3>
+        <div id="cartItemsContainer" class="mb-6"  >
+<div class="flex justify-between items-center py-2 border-b border-gray-200"  >
+    <div class="flex items-center space-x-4"  >
+        <span class="font-bold text-lg"  >Item Name</span>
+    </div>
+    <div class="flex items-center space-x-2"  >
+        <button class="bg-gray-300 text-gray-700 w-6 h-6 rounded-full flex items-center justify-center font-bold text-sm decrease-quantity-btn" data-id="ITEM_ID"  >-</button>
+        <span class="text-sm font-semibold"  >1</span>
+        <button class="bg-gray-300 text-gray-700 w-6 h-6 rounded-full flex items-center justify-center font-bold text-sm increase-quantity-btn" data-id="ITEM_ID"  >+</button>
+    </div>
+    <span class="font-semibold text-orange-500"  >PKR 0.00</span>
+</div>
+            </div>
+        <div id="cartEmptyMessage" class="text-center text-gray-500 mb-6"  >Your cart is empty.</div>
+        <div class="grid md:grid-cols-2 gap-4 my-4">
+    <div>
+        <label for="customerName" class="block text-lg font-bold mb-2">Full Name:</label>
+        <input type="text" id="customerName" placeholder="Enter your name" class="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500">
+    </div>
+    <div>
+        <label for="customerPhone" class="block text-lg font-bold mb-2">Phone Number:</label>
+        <input type="tel" id="customerPhone" placeholder="e.g., 03001234567" class="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500">
+    </div>
+</div>
+        <div class="my-4"  >
+            <label for="deliveryAddress" class="block text-lg font-bold mb-2"  >Delivery Address:</label>
+            <input type="text" id="deliveryAddress" placeholder="Enter your full address" class="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"  >
+        </div>
+
+        <div class="my-4"  >
+            <label for="additionalComments" class="block text-lg font-bold mb-2"  >Additional Comments:</label>
+            <textarea id="additionalComments" placeholder="e.g., 'No onions please' or 'Allergic to nuts'" rows="3" class="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"  ></textarea>
+        </div>
+
+        <div class="flex items-center my-4"  >
+            <input type="checkbox" id="addCutlery" class="mr-2 h-5 w-5 text-orange-500 rounded focus:ring-orange-500"  >
+            <label for="addCutlery" class="text-lg font-bold"  >Add Cutlery?</label>
+        </div>
+
+        <div class="flex justify-between items-center border-t pt-4"  >
+            <span class="text-2xl font-bold"  >Total:</span>
+            <span id="cartTotal" class="text-2xl font-bold text-orange-500"  >PKR 0.00</span>
+        </div>
+        <div class="text-center text-gray-500 mt-4">
+    <p>Estimated Delivery Time: <strong>30-45 minutes</strong></p>
+    </div>
+        <div class="mt-8 space-y-4">
+    <button id="show-receipt-btn" class="w-full bg-orange-500 text-white font-bold py-3 px-6 rounded-full hover:bg-orange-600 transition shadow-lg text-lg">
+        Proceed to Confirmation
+    </button>
+    <button id="clearCartBtn" class="w-full bg-red-600 text-white font-semibold py-3 px-6 rounded-full hover:bg-red-500 transition">
+        Clear Cart
+    </button>
+</div>
+            </div>
+            </div>
+ <script>
+    // ========= 1. MAIN APP INITIALIZATION =========
+    document.addEventListener('DOMContentLoaded', () => {
+        
+        // ========= 2. SETUP AND CONFIGURATION =========
+        const SUPABASE_URL = 'https://fiuckqvkzcbbufueomff.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZpdWNrcXZremNiYnVmdWVvbWZmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgxOTM0ODAsImV4cCI6MjA3Mzc2OTQ4MH0.ETayy6vn87DyfkpdnNCoO5GCnR2a88H9aqD5aGdoCZ4';
+        const { createClient } = supabase;
+        const db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // [NEW] RESTAURANT CONTACT INFO
+        const RESTAURANT_PHONE_NUMBER_WHATSAPP = '923460714042'; // No '+' for wa.me links
+        const RESTAURANT_PHONE_NUMBER_CALL_SMS = '+923460714042'; // '+' is needed for tel: and sms: links
+
+        // ========= 3. ELEMENT SELECTORS (MOVED INSIDE FOR SAFETY) =========
+        const getEl = (id) => document.getElementById(id);
+        const queryAll = (selector) => document.querySelectorAll(selector);
+        
+        const menuItemsContainer = getEl('menu-items-container');
+        const searchBar = getEl('search-bar');
+        const noResultsMessage = getEl('no-results-message');
+        const sortSelect = getEl('sort-select');
+let categoryBtns = queryAll('.category-btn'); 
+        const heroOrderButtons = queryAll('.hero-order-btn');
+
+        const cartButton = getEl('cartButton');
+        const cartCountSpan = getEl('cartCount');
+        const cartModal = getEl('cartModal');
+        const closeModalBtn = getEl('closeModal');
+        const cartItemsContainer = getEl('cartItemsContainer');
+        const cartTotalSpan = getEl('cartTotal');
+        const cartEmptyMessage = getEl('cartEmptyMessage');
+        const clearCartBtn = getEl('clearCartBtn');
+        
+        const deliveryAddressInput = getEl('deliveryAddress');
+        const addCutleryCheckbox = getEl('addCutlery');
+        const additionalCommentsTextarea = getEl('additionalComments');
+        const customerNameInput = getEl('customerName');
+const customerPhoneInput = getEl('customerPhone');
+
+        const orderTriggerBtns = queryAll('.order-trigger-btn');
+        const receiptContainer = getEl('receipt-container');
+        const receiptContent = getEl('receipt-content');
+        const closeReceiptBtn = getEl('close-receipt-btn');
+        const saveReceiptBtn = getEl('save-receipt-btn');
+const sendOrderReceiptBtn = getEl('send-order-receipt-btn');
+const showReceiptBtn = getEl('show-receipt-btn');
+const confirmOrderBtn = getEl('confirm-order-btn');
+const cancelOrderBtn = getEl('cancel-order-btn');
+const stickyCartBtn = getEl('sticky-cart-button');
+const stickyCartCount = getEl('sticky-cart-count');
+const stickyCartTotal = getEl('sticky-cart-total');
+        const quickViewModal = getEl('quick-view-modal');
+        const closeQuickViewBtn = getEl('close-quick-view');
+        const quickViewOptions = getEl('quick-view-options');
+const recentOrdersContainer = getEl('recent-orders-container');
+const congratsModal = getEl('congrats-modal');
+const closeCongratsBtn = getEl('close-congrats-btn');
+const congratsDeliveryTime = getEl('congrats-delivery-time');
+        // ========= 4. GLOBAL STATE VARIABLES =========
+        let cart = [];
+        let allMenuItems = [];
+        let currentCategory = 'deals';
+        let lastSuccessfulOrderForReceipt = null; 
+        
+        // ========= 5. CORE FUNCTIONS =========
+
+        async function initApp() {
+            loadCart();
+            updateCartUI();
+            await buildHeroSlider(); 
+            setupEventListeners(); 
+            setupHeroSlider();
+            setupScrollAnimations();
+                renderRecentOrders();
+            await initMenu(); 
+        }
+async function buildHeroSlider() {
+    const slidesContainer = getEl('slides-container');
+    if (!slidesContainer) return;
+
+    try {
+        // Fetch only the items where 'is_featured' is true
+        const { data, error } = await db
+            .from('menu_items')
+            .select('*')
+            .eq('is_featured', true) // The magic filter
+            .limit(3); // Get a maximum of 3 featured items
+
+        if (error) throw error;
+        if (!data || data.length === 0) {
+            // If no featured items, hide the slider
+            getEl('hero-slider').style.display = 'none';
+            return;
+        }
+
+        // Clear any hard-coded slides
+        slidesContainer.innerHTML = '';
+
+        // Build a new slide for each featured item
+        data.forEach(item => {
+            const slideHTML = `
+                <div class="w-full h-full flex-shrink-0 relative">
+                    <img src="${item.image_url}" class="w-full h-full object-cover" alt="${item.name}">
+                    <div class="absolute inset-0 bg-black bg-opacity-40"></div>
+                    <div class="absolute inset-0 flex flex-col justify-center items-center text-center text-white p-4">
+                        <h2 class="text-4xl md:text-6xl font-bold mb-4">${item.name}</h2>
+                        <p class="text-lg md:text-xl max-w-2xl mb-8">${item.description || ''}</p>
+                        <button data-order-id="${item.id}" class="hero-order-btn bg-orange-500 text-white font-semibold py-3 px-8 rounded-full shadow-lg hover:bg-orange-600 transition duration-300 pulse-btn">
+                            Order Now
+                        </button>
+                    </div>
+                </div>
+            `;
+            slidesContainer.insertAdjacentHTML('beforeend', slideHTML);
+        });
+
+    } catch (error) {
+        console.error('Error building hero slider:', error.message);
+        // Hide the slider on error to prevent a broken display
+        getEl('hero-slider').style.display = 'none';
+    }
+}
+async function initMenu() {
+    try {
+        await buildCategoryButtons(); // First, create the buttons
+        await fetchMenuItems();       // Then, fetch the items
+    } catch (error) {
+        console.error('Error initializing menu:', error.message);
+        menuItemsContainer.innerHTML = `<p class="text-red-400 text-center col-span-full">Could not load the menu system.</p>`;
+    }
+}
+async function buildCategoryButtons() {
+    const { data, error } = await db
+        .from('categories')
+        .select('*')
+        .order('display_order'); // Use the display_order to sort the buttons
+
+    if (error) throw error;
+
+    const categoryContainer = document.querySelector('.flex.flex-wrap.justify-center');
+    if (!categoryContainer) return;
+
+    categoryContainer.innerHTML = ''; // Clear any hard-coded buttons
+
+    data.forEach(category => {
+        const categorySlug = category.name.toLowerCase().replace(/\s+/g, '-'); // e.g., "Side Dishes" -> "side-dishes"
+        const buttonHTML = `
+            <button class="category-btn bg-white text-red-900 px-4 py-2 rounded-full font-semibold hover:bg-gray-100 transition duration-300" data-category="${categorySlug}">
+                ${category.name}
+            </button>
+        `;
+        categoryContainer.insertAdjacentHTML('beforeend', buttonHTML);
+    });
+
+    // We must re-select the category buttons and re-add their event listeners
+    // because we just created them dynamically.
+    categoryBtns = queryAll('.category-btn');
+    categoryBtns.forEach(button => button.addEventListener('click', handleCategoryClick));
+}
+
+/**
+ * [MODIFIED] This is the old fetchAndRenderMenu, now simplified and renamed.
+ */
+async function fetchMenuItems() {
+    // This logic is now simpler because it only has to worry about items.
+    const { data: menuItemsData, error: menuItemsError } = await db.from('menu_items').select('*');
+    if (menuItemsError) throw menuItemsError;
+
+    menuItemsContainer.innerHTML = ''; 
+    menuItemsData.forEach(item => {
+        if (item.price_small || item.price_medium || item.price_large || item.price_xl) {
+            item.sizes = {};
+            if (item.price_small) item.sizes['Small'] = item.price_small;
+            if (item.price_medium) item.sizes['Medium'] = item.price_medium;
+            if (item.price_large) item.sizes['Large'] = item.price_large;
+            if (item.price_xl) item.sizes['Extra Large'] = item.price_xl;
+        }
+        
+        const cardHTML = createMenuCardHTML(item);
+        menuItemsContainer.insertAdjacentHTML('beforeend', cardHTML);
+    });
+
+    allMenuItems = Array.from(queryAll('.menu-card'));
+    
+    // Activate the first category button by default
+    const firstCategoryButton = document.querySelector('.category-btn');
+    if (firstCategoryButton) {
+        firstCategoryButton.click();
+    }
+}
+        function createMenuCardHTML(item) {
+            const priceDisplay = item.sizes ? `<span class="text-xl font-bold text-orange-500">PKR ${item.sizes.Small} - ${item.sizes['Extra Large']}</span>` : `<div><span class="text-xl font-bold text-orange-500">PKR ${item.price}</span>${item.original_price ? `<span class="text-gray-500 line-through text-sm ml-2">PKR ${item.original_price}</span>` : ''}</div>`;
+            const buttonHTML = item.sizes ? `<button class="w-full bg-orange-500 text-white font-semibold py-2 px-4 mt-4 rounded-full hover:bg-orange-600 transition add-to-cart-btn">Select Size</button>` : `<button class="bg-orange-500 text-white font-semibold py-2 px-4 mt-4 rounded-full hover:bg-orange-600 transition add-to-cart-btn">Add to Cart</button>`;
+            const sizeSelectorHTML = item.sizes ? `<div class="size-selector mt-4 px-4 bg-black rounded-lg"><p class="font-bold text-center text-white mb-3">Choose a size:</p><div class="flex flex-col gap-2">${Object.entries(item.sizes).map(([size, price]) => `<button class="size-btn bg-white p-3 rounded-md shadow-sm hover:bg-green-300 w-full" data-size="${size}" data-price="${price}"><div class="flex justify-between items-center font-semibold text-gray-700"><span>${size}</span><span class="text-gray-400 mx-2 flex-grow border-b border-dotted border-gray-400"></span><span>${price} PKR</span></div></button>`).join('')}</div></div>` : '';
+            return `<div class="bg-white rounded-lg shadow-md p-6 menu-card" data-category="${item.category}" data-id="${item.id}" data-name="${item.name}" data-description="${item.description || ''}" data-image="${item.image_url}" ${item.sizes ? `data-sizes='${JSON.stringify(item.sizes)}'` : ''} ${item.price ? `data-price="${item.price}"` : ''}><img src="${item.image_url}" alt="${item.name}" class="w-full h-48 object-cover rounded-md mb-4" loading="lazy"><div class="flex flex-col flex-grow"><h3 class="text-2xl font-semibold text-gray-800">${item.name}</h3><p class="text-gray-600 mt-2 flex-grow">${item.description || ''}</p><div class="mt-4">${priceDisplay}</div>${buttonHTML}${sizeSelectorHTML}</div></div>`;
+        }
+        
+        // ========= 6. ORDER FINALIZATION AND SUBMISSION =========
+
+        /**
+         * [NEW] Creates a formatted text string of the current order.
+         */
+function handleShowReceipt() {
+    // Validation
+    if (cart.length === 0) { showToastNotification("Your cart is empty.", 'error'); return; }
+    const customerName = customerNameInput.value.trim();
+    if (!customerName) { showToastNotification("Please enter your name.", 'error'); customerNameInput.focus(); return; }
+    const customerPhone = customerPhoneInput.value.trim();
+    if (!customerPhone) { showToastNotification("Please enter your phone number.", 'error'); customerPhoneInput.focus(); return; }
+    const address = deliveryAddressInput.value.trim();
+    if (!address) { showToastNotification("Please enter a delivery address.", 'error'); deliveryAddressInput.focus(); return; }
+    
+    // Store current state for confirmation
+    lastSuccessfulOrderForReceipt = {
+        cart: JSON.parse(JSON.stringify(cart)),
+        total: parseFloat(cartTotalSpan.textContent.replace('PKR ', '')),
+        name: customerName, phone: customerPhone, address: address,
+        comments: additionalCommentsTextarea.value.trim(), wants_cutlery: addCutleryCheckbox.checked
+    };
+    receiptContent.innerHTML = generateReceiptContent();
+    receiptContainer.classList.remove('hidden');
+    cartModal.style.display = 'none';
+}
+// REPLACE this entire function
+async function handleConfirmOrder() {
+    const orderButton = getEl('confirm-order-btn');
+    if (!orderButton || !lastSuccessfulOrderForReceipt) return;
+
+    // --- Save the original state BEFORE disabling ---
+    const originalButtonText = orderButton.innerHTML;
+    orderButton.innerHTML = 'Placing Order...';
+    orderButton.disabled = true;
+
+    // --- Submit the order ---
+    const { success, error } = await submitOrderToSupabase(lastSuccessfulOrderForReceipt);
+
+    // --- Handle the result ---
+    if (success) {
+        triggerConfetti();
+        receiptContainer.classList.add('hidden'); 
+        showCongratsModal();
+        saveOrderToHistory();
+        cart = []; 
+        updateCartUI();
+    } else {
+        showToastNotification(`Order failed: ${error.message}`, 'error');
+    }
+
+    // --- [THE FIX] This now runs AFTER both success and failure ---
+    // Always restore the button for the next time the modal is opened.
+    orderButton.innerHTML = originalButtonText;
+    orderButton.disabled = false;
+}
+async function submitOrderToSupabase(orderDetails) {
+    try {
+        const orderPayload = {
+            customer_details: { name: orderDetails.name, phone: orderDetails.phone, address: orderDetails.address, comments: orderDetails.comments, wants_cutlery: orderDetails.wants_cutlery },
+            items: orderDetails.cart,
+            total_price: orderDetails.total,
+            status: 'Pending'
+        };
+        const { error } = await db.from('orders').insert([orderPayload]);
+        if (error) throw error;
+        return { success: true }; 
+    } catch (error) {
+        console.error('Supabase insert error:', error.message);
+        return { success: false, error: error };
+    }
+}
+// REPLACE with this cleaner version
+function generateReceiptContent() {
+    if (!lastSuccessfulOrderForReceipt) return '<p>No order details found.</p>';
+
+    const { cart: orderCart, total, address, comments, name, phone, wants_cutlery } = lastSuccessfulOrderForReceipt;
+    
+    // This function now only has to build the core order details
+    let receiptHTML = '';
+    
+    if (name) receiptHTML += `<p class="mb-2"><b>Name:</b> ${name}</p>`;
+    if (phone) receiptHTML += `<p class="mb-2"><b>Phone:</b> ${phone}</p>`;
+    if (address) receiptHTML += `<p class="mb-4"><b>Address:</b> ${address}</p>`;
+    
+    receiptHTML += '<hr class="my-4">';
+    
+    receiptHTML += `
+        <ul class="space-y-3 mb-4">
+            ${orderCart.map(item => `
+                <li class="flex justify-between items-center">
+                    <span>${item.quantity}x ${item.name}</span>
+                    <span class="font-semibold">PKR ${(item.price * item.quantity).toFixed(2)}</span>
+                </li>
+            `).join('')}
+        </ul>
+        <hr class="my-4">
+        <div class="flex justify-between font-bold text-xl mb-4">
+            <span>Total:</span>
+            <span>PKR ${total.toFixed(2)}</span>
+        </div>
+    `;
+
+    if (comments) receiptHTML += `<p class="mt-4 text-sm text-gray-600"><b>Comments:</b> ${comments}</p>`;
+    if (wants_cutlery) receiptHTML += `<p class="mt-2 text-sm text-gray-600"><b>Cutlery Included</b></p>`;
+
+    return receiptHTML;
+}
+        // REPLACE this whole function
+async function saveReceiptAsImage() {
+    if (!lastSuccessfulOrderForReceipt) {
+        showToastNotification("No order details to save.", 'error');
+        return;
+    }
+
+    // 1. Create a temporary container div and add it to the body
+    const printContainer = document.createElement('div');
+    printContainer.id = 'receipt-print-container';
+    
+    // 2. Generate the full, clean HTML for the receipt
+    const { cart: orderCart, total, address, comments, name, phone, wants_cutlery } = lastSuccessfulOrderForReceipt;
+    let receiptHTML = `
+        <div style="text-align: center; margin-bottom: 2rem;">
+            <img src="https://img.freepik.com/premium-vector/burger-logo_1366-144.jpg" alt="Pixel Tales Logo" style="width: 80px; margin: 0 auto;">
+            <h2 style="font-size: 1.875rem; font-weight: 700; margin-top: 1rem;">Order Receipt</h2>
+            <p style="color: #6b7280;">Thank you for your order!</p>
+        </div>
+        <hr style="margin-bottom: 1.5rem;">
+    `;
+    if (name) receiptHTML += `<p style="margin-bottom: 0.5rem;"><b>Name:</b> ${name}</p>`;
+    if (phone) receiptHTML += `<p style="margin-bottom: 0.5rem;"><b>Phone:</b> ${phone}</p>`;
+    if (address) receiptHTML += `<p style="margin-bottom: 1.5rem;"><b>Address:</b> ${address}</p>`;
+    
+    receiptHTML += `<h3 style="font-weight: 600; font-size: 1.125rem; border-top: 1px solid #e5e7eb; border-bottom: 1px solid #e5e7eb; padding-top: 0.75rem; padding-bottom: 0.75rem; margin-bottom: 1rem;">Order Summary</h3>`;
+    
+    receiptHTML += `<div style="margin-bottom: 1.5rem;">`;
+    orderCart.forEach(item => {
+        receiptHTML += `
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                <span>${item.quantity}x ${item.name}</span>
+                <span style="font-weight: 600;">PKR ${(item.price * item.quantity).toFixed(2)}</span>
+            </div>
+        `;
+    });
+    receiptHTML += `</div>`;
+
+    receiptHTML += `<hr style="margin-bottom: 1.5rem;">`;
+    receiptHTML += `
+        <div style="display: flex; justify-content: space-between; font-weight: 700; font-size: 1.5rem; margin-bottom: 1.5rem;">
+            <span>Total:</span>
+            <span>PKR ${total.toFixed(2)}</span>
+        </div>
+    `;
+
+    if (comments) receiptHTML += `<p style="margin-top: 1.5rem; font-size: 0.875rem; color: #4b5563;"><b>Comments:</b> ${comments}</p>`;
+    if (wants_cutlery) receiptHTML += `<p style="font-size: 0.875rem; color: #4b5563;"><b>Cutlery Included</b></p>`;
+    
+    // 3. Put the clean HTML into our off-screen container
+    printContainer.innerHTML = receiptHTML;
+    document.body.appendChild(printContainer);
+
+    // 4. Use html2canvas to capture the PERFECT, off-screen div
+    try {
+        const canvas = await html2canvas(printContainer, { 
+            scale: 2, // Higher resolution
+            logging: false,
+            useCORS: true // Important for external images if any
+        });
+        const link = document.createElement('a');
+        link.href = canvas.toDataURL('image/png');
+        link.download = `pixel-tales-receipt-${Date.now()}.png`;
+        link.click();
+    } catch (err) {
+        console.error("Error generating receipt image:", err);
+        showToastNotification("Could not save receipt image.", 'error');
+    } finally {
+        // 5. IMPORTANT: Clean up and remove the temporary div
+        document.body.removeChild(printContainer);
+    }
+}
+        
+        // ========= 7. EVENT LISTENERS AND HANDLERS =========
+        function setupEventListeners() {
+    searchBar.addEventListener('input', updateMenuDisplay);
+    sortSelect.addEventListener('change', updateMenuDisplay);
+    menuItemsContainer.addEventListener('click', handleMenuInteraction);
+    const dynamicHeroOrderButtons = queryAll('.hero-order-btn');
+    dynamicHeroOrderButtons.forEach(b => b.addEventListener('click', handleHeroOrderClick));
+
+    cartButton.addEventListener('click', () => { cartModal.style.display = 'flex'; });
+    closeModalBtn.addEventListener('click', () => { cartModal.style.display = 'none'; });
+    window.addEventListener('click', (e) => { if (e.target === cartModal) cartModal.style.display = 'none'; });
+    clearCartBtn.addEventListener('click', () => { cart = []; updateCartUI(); });
+    cartItemsContainer.addEventListener('click', handleCartQuantityChange);
+
+    if (quickViewModal) {
+        quickViewModal.addEventListener('click', (e) => { if (e.target.id === 'quick-view-modal') quickViewModal.style.display = 'none'; });
+        closeQuickViewBtn.addEventListener('click', () => { quickViewModal.style.display = 'none'; });
+        quickViewOptions.addEventListener('click', handleQuickViewAddToCart);
+    }
+    
+    // New Listeners for the Two-Step Flow
+    if (showReceiptBtn) showReceiptBtn.addEventListener('click', handleShowReceipt);
+    if (confirmOrderBtn) confirmOrderBtn.addEventListener('click', handleConfirmOrder);
+    if (cancelOrderBtn) {
+        cancelOrderBtn.addEventListener('click', () => {
+            receiptContainer.classList.add('hidden');
+            cartModal.style.display = 'flex';
+        });
+    }
+
+    if (saveReceiptBtn) saveReceiptBtn.addEventListener('click', saveReceiptAsImage);
+    if (recentOrdersContainer) recentOrdersContainer.addEventListener('click', handleOrderAgain);
+
+    if (stickyCartBtn) {
+        window.addEventListener('scroll', handleScroll);
+        stickyCartBtn.addEventListener('click', () => { cartButton.click(); });
+    }
+}
+if (congratsModal) {
+    closeCongratsBtn.addEventListener('click', closeCongratsModal);
+    congratsModal.addEventListener('click', (e) => {
+        if (e.target === congratsModal) { // Allow clicking the background to close
+            closeCongratsModal();
+        }
+    });
+}
+        function handleCategoryClick(event) {
+            currentCategory = event.currentTarget.dataset.category;
+            categoryBtns.forEach(btn => { btn.classList.remove('bg-red-700', 'text-white'); btn.classList.add('bg-white', 'text-gray-800'); });
+            event.currentTarget.classList.add('bg-red-700', 'text-white');
+            updateMenuDisplay();
+        }
+// REPLACE this whole function
+function handleMenuInteraction(e) {
+    const card = e.target.closest('.menu-card'); if (!card) return;
+    const sizeButton = e.target.closest('.size-btn');
+    const mainButton = e.target.closest('.add-to-cart-btn');
+
+    if (sizeButton) {
+        const finalId = `${card.dataset.id}-${sizeButton.dataset.size.toLowerCase()}`;
+        const finalName = `${card.dataset.name} - ${sizeButton.dataset.size}`;
+        // Pass the clicked sizeButton to the function
+        addToCart(finalName, parseFloat(sizeButton.dataset.price), finalId, sizeButton);
+        card.querySelector('.size-selector').classList.remove('selector-open');
+    } else if (mainButton) {
+        if (card.dataset.sizes) {
+            card.querySelector('.size-selector').classList.toggle('selector-open');
+        } else {
+            // Pass the clicked mainButton to the function
+            addToCart(card.dataset.name, parseFloat(card.dataset.price), card.dataset.id, mainButton);
+        }
+    } else {
+        openQuickView(card.dataset.id);
+    }
+}        
+        function handleHeroOrderClick(e) {
+            const itemCard = allMenuItems.find(card => card.dataset.id === e.currentTarget.dataset.orderId);
+            if (itemCard) {
+                const data = itemCard.dataset;
+                if (data.sizes) {
+                    const sizes = JSON.parse(data.sizes);
+                    const defaultSize = Object.keys(sizes)[0];
+                    addToCart(`${data.name} - ${defaultSize}`, sizes[defaultSize], `${data.id}-${defaultSize.toLowerCase()}`);
+                } else {
+                    addToCart(data.name, parseFloat(data.price), data.id);
+                }
+                cartButton.click();
+            }
+        } 
+        // ========= 8. HELPER FUNCTIONS =========
+function triggerConfetti() {
+    const confettiCount = 100; // How many pieces of confetti
+    const container = document.body;
+    const colors = ['#f59e0b', '#ef4444', '#f97316', '#ffffff']; // Yellow, Red, Orange, White
+
+    for (let i = 0; i < confettiCount; i++) {
+        const confettiEl = document.createElement('div');
+        confettiEl.classList.add('confetti');
+
+        // Randomize properties
+        confettiEl.style.left = `${Math.random() * 100}vw`;
+        confettiEl.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+        confettiEl.style.animationDelay = `${Math.random() * 0.5}s`; // Stagger the start times
+        confettiEl.style.transform = `scale(${Math.random() * 0.75 + 0.5})`; // Random sizes
+        
+        container.appendChild(confettiEl);
+
+        // Automatic cleanup
+        setTimeout(() => {
+            confettiEl.remove();
+        }, 4000); // Remove after the animation ends
+    }
+}
+// REPLACE this function
+function showCongratsModal() {
+    if (!congratsModal) return;
+
+    // --- [THE FIX] ---
+    // Set the delivery time text before showing the modal.
+    if (congratsDeliveryTime) {
+        congratsDeliveryTime.innerHTML = 'Estimated Delivery: <strong>30-45 minutes</strong>';
+    }
+
+    congratsModal.classList.add('visible');
+    
+    // Auto-close after a longer duration to give them time to read.
+    setTimeout(() => {
+        closeCongratsModal();
+    }, 5000); // Increased to 5 seconds
+}
+function closeCongratsModal() {
+    if (!congratsModal) return;
+    
+    congratsModal.classList.remove('visible');
+    // The modal is already hidden by the .modal class, this just removes the visible state
+}
+function handleScroll() {
+    if (!stickyCartBtn) return;
+    const scrollPosition = window.scrollY;
+    const showThreshold = 150; // Pixels to scroll before button is considered
+
+    if (scrollPosition > showThreshold && cart.length > 0) {
+        stickyCartBtn.classList.add('visible');
+    } else {
+        stickyCartBtn.classList.remove('visible');
+    }
+}
+function saveOrderToHistory() {
+    if (!lastSuccessfulOrderForReceipt) return;
+    const pastOrders = JSON.parse(localStorage.getItem('pixelTalesPastOrders')) || [];
+    const newOrder = {
+        date: new Date().toLocaleDateString(),
+        cart: lastSuccessfulOrderForReceipt.cart // Use the confirmed cart data
+    };
+    pastOrders.unshift(newOrder);
+    const recentThreeOrders = pastOrders.slice(0, 3);
+    localStorage.setItem('pixelTalesPastOrders', JSON.stringify(recentThreeOrders));
+    renderRecentOrders();
+}
+function renderRecentOrders() {
+    const pastOrders = JSON.parse(localStorage.getItem('pixelTalesPastOrders')) || [];
+    const container = getEl('recent-orders-container');
+
+    if (!container) return; // Safety check
+
+    if (pastOrders.length === 0) {
+        container.innerHTML = '<p class="text-center text-gray-500">You have no recent orders yet!</p>';
+    } else {
+        container.innerHTML = pastOrders.map((order, index) => {
+            const total = order.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            const itemsSummary = order.cart.map(item => `${item.quantity}x ${item.name}`).join(', ');
+
+            return `
+                <div class="bg-white p-6 rounded-lg shadow-md flex flex-col sm:flex-row justify-between items-start sm:items-center">
+                    <div class="text-left mb-4 sm:mb-0">
+                        <h4 class="text-xl font-bold text-gray-800 mb-1">Order from ${order.date}</h4>
+                        <p class="text-gray-600 text-sm">${itemsSummary}</p>
+                        <p class="text-gray-800 font-semibold mt-2">Total: PKR ${total.toFixed(2)}</p>
+                    </div>
+                    <button class="order-again-btn bg-orange-500 text-white font-semibold py-2 px-5 rounded-full hover:bg-orange-600 transition w-full sm:w-auto" data-order-index="${index}">
+                        Order Again
+                    </button>
+                </div>`;
+        }).join('');
+    }
+}
+
+/**
+ * [NEW] Handles the click on an "Order Again" button.
+ */
+function handleOrderAgain(e) {
+    const button = e.target.closest('.order-again-btn');
+    if (!button) return;
+
+    const orderIndex = parseInt(button.dataset.orderIndex, 10);
+    const pastOrders = JSON.parse(localStorage.getItem('pixelTalesPastOrders')) || [];
+    
+    if (pastOrders[orderIndex]) {
+        // Replace the current cart with a copy of the past order's items.
+        cart = JSON.parse(JSON.stringify(pastOrders[orderIndex].cart));
+        
+        // Give the user feedback.
+        updateCartUI(); 
+        cartButton.click(); // Open the cart modal.
+        showToastNotification("Previous order added to cart!");
+    }
+}
+
+        const saveCart = () => sessionStorage.setItem('restaurantCart', JSON.stringify(cart));
+        const loadCart = () => { const storedCart = sessionStorage.getItem('restaurantCart'); if (storedCart) cart = JSON.parse(storedCart); };
+        function addToCart(name, price, id, clickedButton = null) { 
+    const existingItem = cart.find(item => item.id === id); 
+    if (existingItem) { 
+        existingItem.quantity++; 
+    } else { 
+        cart.push({ id, name, price, quantity: 1 }); 
+    } 
+    
+    updateCartUI(); 
+    showToastNotification(`${name} added to cart!`); 
+
+    // --- NEW: Button Feedback Logic ---
+    if (clickedButton) {
+        const originalText = clickedButton.innerHTML;
+        
+        // Change to success state
+        clickedButton.classList.add('btn-success');
+        clickedButton.innerHTML = '✓ Added!';
+        clickedButton.disabled = true;
+
+        // Revert back after 2 seconds
+        setTimeout(() => {
+            clickedButton.classList.remove('btn-success');
+            clickedButton.innerHTML = originalText;
+            clickedButton.disabled = false;
+        }, 2000);
+    }
+}
+        // REPLACE this whole function
+function updateCartUI() {
+    cartItemsContainer.innerHTML = ''; 
+    let total = 0; 
+    const itemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+
+    if (itemCount === 0) { 
+        cartEmptyMessage.style.display = 'block'; 
+        clearCartBtn.style.display = 'none'; 
+        orderTriggerBtns.forEach(b => b.classList.add('opacity-50', 'cursor-not-allowed'));
+        if (stickyCartBtn) stickyCartBtn.classList.remove('visible'); // Hide if cart is emptied
+    } else { 
+        cartEmptyMessage.style.display = 'none'; 
+        clearCartBtn.style.display = 'block'; 
+        orderTriggerBtns.forEach(b => b.classList.remove('opacity-50', 'cursor-not-allowed'));
+        cart.forEach(item => { 
+            const itemElement = document.createElement('div'); 
+            itemElement.className = 'flex justify-between items-center py-2 border-b border-gray-200'; 
+            itemElement.innerHTML = `<div class="flex-grow pr-4"><span class="font-bold text-lg text-gray-800">${item.name}</span><p class="text-sm text-gray-500">PKR ${item.price.toFixed(2)} each</p></div><div class="flex items-center space-x-3"><button class="quantity-btn-modern decrease-quantity-btn" data-id="${item.id}">-</button><span class="text-lg font-semibold w-8 text-center">${item.quantity}</span><button class="quantity-btn-modern increase-quantity-btn" data-id="${item.id}">+</button></div><div class="w-24 text-right"><span class="font-semibold text-orange-500">PKR ${(item.price * item.quantity).toFixed(2)}</span></div>`; 
+            cartItemsContainer.appendChild(itemElement); 
+            total += item.price * item.quantity; 
+        }); 
+    } 
+    
+    // Update main cart UI
+    cartTotalSpan.textContent = `PKR ${total.toFixed(2)}`; 
+    cartCountSpan.textContent = itemCount; 
+    
+    // [NEW] Update sticky cart UI
+    if (stickyCartBtn) {
+        stickyCartCount.textContent = `${itemCount} Item${itemCount > 1 ? 's' : ''}`;
+        stickyCartTotal.textContent = `PKR ${total.toFixed(2)}`;
+        // Manually trigger scroll handler in case user adds item without scrolling
+        handleScroll();
+    }
+    
+    saveCart(); 
+}
+        function handleCartQuantityChange(e) {
+            if (e.target.matches('.increase-quantity-btn, .decrease-quantity-btn')) { 
+                const id = e.target.dataset.id; 
+                const itemIndex = cart.findIndex(i => i.id === id); 
+                if (itemIndex === -1) return; 
+                if (e.target.matches('.increase-quantity-btn')) { 
+                    cart[itemIndex].quantity++; 
+                } else { 
+                    cart[itemIndex].quantity--; 
+                    if (cart[itemIndex].quantity <= 0) cart.splice(itemIndex, 1); 
+                } 
+                updateCartUI(); 
+            } 
+        }
+        
+        /**
+ * [UPGRADED] Shows a toast notification at the bottom-right of the screen.
+ * Can now handle 'success' (green) and 'error' (red) types.
+ */
+function showToastNotification(message, type = 'success') { 
+    const div = document.createElement('div'); 
+    
+    // Determine color and icon based on the 'type' parameter
+    const isError = type === 'error';
+    const bgColor = isError ? 'bg-red-600' : 'bg-green-600';
+    const icon = isError 
+        ? `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>`
+        : `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>`;
+        
+    div.className = `fixed bottom-5 right-5 ${bgColor} text-white px-5 py-3 rounded-lg shadow-xl flex items-center space-x-3 opacity-0 transition-all duration-500 transform translate-y-3 z-[150]`; // Increased z-index
+    div.innerHTML = `${icon}<span>${message}</span>`; 
+    
+    document.body.appendChild(div); 
+    
+    // Animate in
+    setTimeout(() => { 
+        div.style.opacity = '1'; 
+        div.style.transform = 'translateY(0)'; 
+    }, 10); 
+    
+    // Animate out and remove
+    setTimeout(() => { 
+        div.style.opacity = '0'; 
+        div.style.transform = 'translateY(3px)'; 
+        setTimeout(() => div.remove(), 500); 
+    }, 3000); 
+}
+
+        function openQuickView(itemId) {
+            const card = allMenuItems.find(c => c.dataset.id === itemId);
+            if (!card) return;
+            const item = card.dataset;
+            getEl('quick-view-image').src = item.image;
+            getEl('quick-view-title').textContent = item.name;
+            getEl('quick-view-description').textContent = item.description;
+
+            const sizes = item.sizes ? JSON.parse(item.sizes) : null;
+            if (sizes) {
+                let buttonsHTML = `<p class="font-bold text-lg mb-2">Choose a size:</p>`;
+                for (const [size, price] of Object.entries(sizes)) {
+                    buttonsHTML += `<button class="size-btn bg-gray-100 p-3 rounded-md shadow-sm hover:bg-green-300 w-full mb-2" data-name="${item.name}" data-price="${price}" data-id="${item.id}" data-size="${size}"><div class="flex justify-between items-center font-semibold text-gray-700"><span>${size}</span><span class="text-gray-400 mx-2 flex-grow border-b border-dotted border-gray-400"></span><span>${price} PKR</span></div></button>`;
+                }
+                quickViewOptions.innerHTML = buttonsHTML;
+            } else {
+                quickViewOptions.innerHTML = `<button class="w-full bg-orange-500 text-white font-semibold py-3 px-6 mt-4 rounded-full hover:bg-orange-600 transition" data-name="${item.name}" data-price="${item.price}" data-id="${item.id}">Add to Cart - PKR ${item.price}</button>`;
+            }
+            quickViewModal.style.display = 'flex';
+        }
+function handleQuickViewAddToCart(e) {
+    const button = e.target.closest('[data-price]');
+    if (!button) return;
+    
+    const { name, price, id, size } = button.dataset;
+    const finalName = size ? `${name} - ${size}` : name;
+    const finalId = size ? `${id}-${size.toLowerCase()}` : id;
+    addToCart(finalName, parseFloat(price), finalId, button);
+    setTimeout(() => {
+        quickViewModal.style.display = 'none';
+    }, 500);
+}
+        function setupScrollAnimations() { const observer = new IntersectionObserver((entries) => { entries.forEach(entry => { if (entry.isIntersecting) { entry.target.classList.add('fade-in-up'); observer.unobserve(entry.target); } }); }, { threshold: 0.1 }); queryAll('[data-animation="fade-in-up"]').forEach(section => { section.classList.add('opacity-0'); observer.observe(section); }); }
+        function setupHeroSlider() { const slidesContainer = getEl("slides-container"), sliderDotsContainer = getEl("slider-dots"); if (!slidesContainer || !sliderDotsContainer) return; const slides = slidesContainer.children, numSlides = slides.length; let currentSlide = 0, slideInterval; for (let i = 0; i < numSlides; i++) { const dot = document.createElement("button"); dot.className = "w-3 h-3 rounded-full transition-colors duration-300"; dot.setAttribute("aria-label", `Go to slide ${i + 1}`); dot.addEventListener("click", () => { goToSlide(i); resetInterval(); }); sliderDotsContainer.appendChild(dot); } const dots = sliderDotsContainer.children; const goToSlide = (slideIndex) => { slidesContainer.style.transform = `translateX(-${slideIndex * 100}%)`; currentSlide = slideIndex; updateDots(); }; const updateDots = () => { for (let i = 0; i < numSlides; i++) { dots[i].classList.toggle("bg-white", i === currentSlide); dots[i].classList.toggle("bg-white/50", i !== currentSlide); } }; const nextSlide = () => goToSlide((currentSlide + 1) % numSlides); const startInterval = () => slideInterval = setInterval(nextSlide, 5000); const resetInterval = () => { clearInterval(slideInterval); startInterval(); }; goToSlide(0); startInterval(); }    
+        function updateMenuDisplay() { const searchTerm = searchBar.value.toLowerCase().trim(); let visibleItemCount = 0; allMenuItems.forEach(card => { const categoryMatch = currentCategory === 'all' || card.dataset.category === currentCategory; const name = card.dataset.name.toLowerCase(); const description = card.dataset.description.toLowerCase(); const searchMatch = name.includes(searchTerm) || description.includes(searchTerm); if ((searchTerm !== '' && searchMatch) || (searchTerm === '' && categoryMatch)) { card.classList.remove('hidden'); visibleItemCount++; } else { card.classList.add('hidden'); } }); noResultsMessage.style.display = visibleItemCount === 0 ? 'block' : 'none'; const sortValue = sortSelect.value; if (sortValue !== 'default') { let visibleItems = allMenuItems.filter(item => !item.classList.contains('hidden')); visibleItems.sort((a, b) => { const priceA = parseFloat(a.dataset.price) || (a.dataset.sizes ? JSON.parse(a.dataset.sizes).Small : 0); const priceB = parseFloat(b.dataset.price) || (b.dataset.sizes ? JSON.parse(b.dataset.sizes).Small : 0); return sortValue === 'price-asc' ? priceA - priceB : priceB - priceA; }); visibleItems.forEach(item => menuItemsContainer.appendChild(item)); } }
+        initApp();
+    });
+    </script>
+<div id="quick-view-modal" class="modal">
+    <div class="modal-content !max-w-4xl grid md:grid-cols-2 gap-8 items-center">
+        <span id="close-quick-view" class="absolute top-4 right-4 text-gray-600 text-3xl font-bold cursor-pointer hover:text-gray-900" aria-label="Close quick view">&times;</span>
+        <img id="quick-view-image" src="" alt="Quick view of menu item" class="w-full h-64 md:h-full object-cover rounded-lg">
+        <div class="flex flex-col h-full">
+            <h3 id="quick-view-title" class="text-3xl font-bold mb-2"></h3>
+            <p id="quick-view-description" class="text-gray-600 mb-4 flex-grow"></p>
+            <div id="quick-view-options">
+            </div>
+        </div>
+    </div>
+</div>
+<div id="order-confirmation-card" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center hidden z-50"  >
+    <div class="bg-white text-gray-800 p-8 rounded-lg shadow-2xl text-center max-w-sm mx-auto transform scale-90 opacity-0 transition-all duration-500 ease-in-out"  >
+        <div class="text-green-500 mb-4"  >
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"  >
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+        </div>
+        <h3 class="text-2xl font-bold text-red-900 mb-2"  >Order Placed!</h3>
+        <p class="text-gray-600 mb-6"  >Your order has been successfully sent to the restaurant. Thank you!</p>
+        <button id="closeOrderCardBtn" class="bg-red-700 text-white font-semibold py-2 px-6 rounded-full hover:bg-red-800 transition duration-300"  >Done</button>
+    </div>
+</div>
+<!-- REPLACE your receipt modal HTML with this improved structure -->
+<div id="receipt-container" class="hidden fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-110 p-4">
+    <div class="bg-white rounded-lg shadow-2xl flex flex-col w-full max-w-lg max-h-[90vh]">
+        
+        <!-- Modal Header -->
+        <div class="p-6 border-b">
+            <h3 class="text-2xl font-bold text-center">Your Order Receipt</h3>
+        </div>
+
+        <!-- [NEW] Scrollable Modal Body -->
+        <div id="receipt-body" class="p-6 overflow-y-auto">
+            <div id="receipt-content" class="text-left">
+                <!-- Dynamic content will still be injected here -->
+            </div>
+        </div>
+
+        <!-- Modal Footer -->
+        <div class="p-6 border-t bg-gray-50">
+            <div class="text-center mb-4">
+                <p class="text-md text-red-700 font-semibold">
+                    Save your receipt and send it to our WhatsApp to confirm your order!
+                </p>
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+    <button id="cancel-order-btn" class="w-full bg-gray-200 text-gray-700 font-semibold py-3 px-6 rounded-full hover:bg-gray-300 transition">Go Back</button>
+    <button id="confirm-order-btn" class="w-full bg-green-600 text-white font-semibold py-3 px-6 rounded-full hover:bg-green-700 transition">Confirm & Place Order</button>
+</div>
+<div class="mt-4 text-center">
+    <button id="save-receipt-btn" class="w-full bg-green-600 text-white font-semibold py-3 px-6 rounded-full hover:bg-green-700 transition">Download Receipt Image</button>
+</div>
+        </div>
+    </div>
+</div>
+<div id="sticky-cart-button" class="sticky-cart-container">
+    <div class="flex justify-between items-center w-full">
+        <div>
+            <span id="sticky-cart-count" class="font-bold">0 Items</span>
+            <span class="mx-2">|</span>
+            <span id="sticky-cart-total" class="font-semibold">PKR 0.00</span>
+        </div>
+        <div class="flex items-center">
+            <span>View Order</span>
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-2" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd" />
+            </svg>
+        </div>
+    </div>
+</div>
+<div id="congrats-modal" class="modal">
+    <div class="modal-content !max-w-sm text-center">
+        <!-- You can find a better image later, this is a placeholder -->
+        <lottie-player 
+    src="/success.json" 
+    background="transparent" 
+    speed="1" 
+    style="width: 150px; height: 150px; margin: 0 auto;" 
+    autoplay>
+</lottie-player>        
+        <h3 class="text-3xl font-bold text-green-600 mb-2">Congratulations!</h3>
+        <p class="text-gray-600 mb-6">Your order has been submitted successfully.</p>
+        <p id="congrats-delivery-time" class="text-gray-800 font-semibold"></p>  
+        <button id="close-congrats-btn" class="bg-green-600 text-white font-semibold py-2 px-8 rounded-full hover:bg-green-700 transition duration-300">Done</button>
+    </div>
+</div>
+</body>
+</html>

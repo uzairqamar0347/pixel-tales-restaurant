@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - Pixel Tales</title>
+ <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        /* [NEW] Apply the Inter font to the entire page */
+        body {
+         font-family: 'Poppins', sans-serif;
+        }
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        /* Simple styling for the order cards */
+        .order-card {
+            border-left-width: 5px;
+            transition: all 0.2s ease-in-out;
+        }
+        .order-card.status-pending { border-color: #22c55e; } /* Green */
+        .order-card.status-preparing { border-color: #f59e0b; } /* Amber */
+        .order-card.status-completed { border-color: #6b7280; opacity: 0.7; } /* Gray */
+        .order-card.selected {
+            transform: scale(1.02);
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
+        }
+.order-card:hover {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+    </style>
+</head>
+<body class="bg-gray-100 font-sans">
+<header class="bg-white shadow-md">
+    <nav class="container mx-auto px-6 py-4 flex justify-between items-center">
+        <div class="flex items-center space-x-4">
+            <img src="https://img.freepik.com/premium-vector/burger-logo_1366-144.jpg" alt="Pixel Tales Logo" class="h-16">
+            <h1 class="text-3xl font-bold text-gray-800">Admin Panel</h1>
+        </div>
+        <div>
+            <!-- We can add a "Logout" button or other controls here later -->
+        </div>
+    </nav>
+</header>
+    <div id="password-prompt" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50">
+        <div class="bg-white p-8 rounded-lg shadow-xl text-center">
+            <h2 class="text-2xl font-bold mb-4">Admin Access</h2>
+            <p class="text-gray-600 mb-6">Please enter the password to view orders.</p>
+            <input type="password" id="password-input" class="w-full p-2 border border-gray-300 rounded-md mb-4">
+            <button id="password-submit" class="w-full bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-blue-700">Login</button>
+        </div>
+    </div>
+
+    <div id="admin-panel" class="hidden grid grid-cols-1 md:grid-cols-3 gap-6 p-6 min-h-screen">
+        <!-- Column 1: Live Order Feed -->
+        <aside class="md:col-span-1 bg-white p-6 rounded-lg shadow-lg h-full">
+            <h2 class="text-3xl font-bold border-b pb-4 mb-4">Incoming Orders</h2>
+            <div id="orders-feed" class="space-y-4 overflow-y-auto max-h-[85vh]">
+                <!-- Orders will be dynamically inserted here -->
+                <p id="loading-orders" class="text-gray-500">Loading orders...</p>
+            </div>
+        </aside>
+
+        <!-- Column 2: Order Details -->
+        <main class="md:col-span-2 bg-white p-8 rounded-lg shadow-lg h-full">
+            <div id="order-details-view">
+                <div id="no-order-selected" class="text-center text-gray-400">
+                    <h3 class="text-2xl font-semibold">Select an order to view details</h3>
+                    <p class="mt-2">New orders will appear on the left.</p>
+                </div>
+                
+                <div id="details-content" class="hidden">
+                    <!-- Order Details will be dynamically inserted here -->
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Hidden audio element for the notification sound -->
+    <audio id="notification-sound" src="https://assets.mixkit.co/sfx/preview/mixkit-correct-answer-tone-2870.wav" preload="auto"></audio>
+    
+    <!-- JavaScript for the Admin Panel -->
+    <script src="admin.js"></script>
+
+</body>
+</html>

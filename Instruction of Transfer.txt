@@ -1,0 +1,38 @@
+How You Will Transfer the Data to the Owner
+You have completed the hard part. The rest of the process is now exactly the same as in our original plan, but you will use your schema_blueprint.txt file instead of the CLI.
+
+Here is the updated, clear workflow from this point forward:
+
+Step 1: Execute the Blueprint on the New Project
+The restaurant owner creates their new, empty Supabase project.
+You get the login details for their new project.
+Go to the owner's new Supabase Dashboard and open the SQL Editor.
+Copy the entire content of your schema_blueprint.txt file.
+Paste it into the SQL Editor.
+Click RUN.
+Result: The owner's database is now a perfect, secure, empty clone of yours. All the tables and security rules are in place.
+Step 2: Transfer the Data (Content) using CSV
+This part has not changed.
+
+Go to your original Supabase Dashboard.
+Go to the Table Editor.
+Export the data from these tables as .csv files and save them to your PC:
+categories
+menu_items
+(any other tables with data you need)
+Step 3: Import the Data into the New Project
+Go back to the owner's new Supabase Dashboard.
+Go to the Table Editor. The tables you created in Step 1 will be there, but empty.
+Import the .csv files you just saved. The order is important.
+First, select the categories table and import categories.csv.
+Then, select the menu_items table and import menu_items.csv.
+Result: The owner's database now contains all of your menu data.
+Step 4: Update and Deliver the Website
+This is the final handover.
+
+Get the URL and anon key from the owner's project settings (under Project Settings -> API).
+Open your index.html file.
+Update the Supabase credentials in your JavaScript with the owner's new keys.
+Save the index.html file.
+Deliver the final index.html file (and any image assets) to the owner for them to host.
+You have successfully completed the full migration. The manual creation of the blueprint was just a different, more reliable way of achieving the same goal as the CLI. You are in a great position to finish this.
