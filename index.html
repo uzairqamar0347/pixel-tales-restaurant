@@ -619,13 +619,23 @@ async function buildCategoryButtons() {
 /**
  * [MODIFIED] This is the old fetchAndRenderMenu, now simplified and renamed.
  */
+// REPLACE your fetchMenuItems function with this one
 async function fetchMenuItems() {
-    // This logic is now simpler because it only has to worry about items.
-    const { data: menuItemsData, error: menuItemsError } = await db.from('menu_items').select('*');
-    if (menuItemsError) throw menuItemsError;
+    // [THE FIX] We've added .eq('is_available', true) to the query
+    const { data, error } = await db
+        .from('menu_items')
+        .select('*')
+        .eq('is_available', true); // Only fetch items that are marked as available
 
-    menuItemsContainer.innerHTML = ''; 
-    menuItemsData.forEach(item => {
+    if (error) {
+        noResultsMessage.textContent = 'Could not load menu items.';
+        noResultsMessage.classList.remove('hidden');
+        throw error;
+    }
+    
+    menuItemsContainer.innerHTML = '';
+    data.forEach(item => {
+        // ... (the rest of the function remains exactly the same) ...
         if (item.price_small || item.price_medium || item.price_large || item.price_xl) {
             item.sizes = {};
             if (item.price_small) item.sizes['Small'] = item.price_small;
@@ -633,16 +643,14 @@ async function fetchMenuItems() {
             if (item.price_large) item.sizes['Large'] = item.price_large;
             if (item.price_xl) item.sizes['Extra Large'] = item.price_xl;
         }
-        
         const cardHTML = createMenuCardHTML(item);
         menuItemsContainer.insertAdjacentHTML('beforeend', cardHTML);
     });
 
     allMenuItems = Array.from(queryAll('.menu-card'));
-    
-    // Activate the first category button by default
     const firstCategoryButton = document.querySelector('.category-btn');
     if (firstCategoryButton) {
+        currentCategory = firstCategoryButton.dataset.category;
         firstCategoryButton.click();
     }
 }
