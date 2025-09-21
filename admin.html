@@ -44,6 +44,19 @@
             <img src="https://img.freepik.com/premium-vector/burger-logo_1366-144.jpg" alt="Pixel Tales Logo" class="h-16">
             <h1 class="text-3xl font-bold text-gray-800">Admin Panel</h1>
         </div>
+<div>
+        <button id="sound-toggle-btn" class="bg-red-500 text-white font-semibold py-2 px-4 rounded-lg flex items-center space-x-2">
+            <svg id="sound-off-icon" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" clip-rule="evenodd" />
+                <path stroke-linecap="round" stroke-linejoin="round" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" />
+            </svg>
+            <svg id="sound-on-icon" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+            </svg>
+            <span id="sound-status-text">Sounds Off</span>
+        </button>
+    </div>
+</nav>
         <div>
             <!-- We can add a "Logout" button or other controls here later -->
         </div>
@@ -82,10 +95,8 @@
             </div>
         </main>
     </div>
-
-    <!-- Hidden audio element for the notification sound -->
-    <audio id="notification-sound" src="https://assets.mixkit.co/sfx/preview/mixkit-correct-answer-tone-2870.wav" preload="auto"></audio>
-    
+<audio id="notification-sound" src="./notify.mp3" preload="auto"></audio>
+<script src="admin.js"></script> 
     <!-- JavaScript for the Admin Panel -->
     <script src="admin.js"></script>
 

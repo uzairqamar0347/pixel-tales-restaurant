@@ -253,6 +253,92 @@
     transform: scale(1);
     opacity: 1;
 }
+/* --- [OPTION 2] Branded Solid Buttons --- */
+.quantity-btn-brand {
+    background-color: #f97316; /* Your brand orange */
+    border: none;
+    border-radius: 0.5rem; /* Rounded square */
+    width: 1.75rem; /* 28px */
+    height: 1.75rem; /* 28px */
+    font-weight: 600;
+    color: white;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s ease-in-out;
+}
+
+.quantity-btn-brand:hover {
+    background-color: #ea580c; /* A darker orange */
+    transform: scale(1.05);
+}
+.size-chip-container {
+    display: flex;
+    justify-content: space-around;
+    gap: 0.5rem; /* A smaller gap for when they are close */
+    margin-bottom: 1rem;
+    padding: 0 0.1rem; /* Add a little horizontal padding */
+}
+
+.size-chip {
+    border: 2px solid #e5e7eb; /* light gray */
+    background-color: #ffffff;
+    color: #374151; /* dark gray */
+    border-radius: 9999px; /* pill shape */
+    padding: 0.5rem 1.25rem; /* vertical | horizontal */
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+}
+
+.size-chip:hover {
+    border-color: #fb923c; /* light orange */
+}
+
+.size-chip.selected {
+    background-color: #f97316; /* brand orange */
+    color: #ffffff;
+    border-color: #f97316;
+}
+
+.size-price-display {
+    text-align: center;
+    font-size: 1.25rem; /* 20px */
+    font-weight: 700;
+    color: #f59e0b; /* amber-500 */
+    margin-bottom: 1.5rem;
+    height: 2rem; /* Reserve space to prevent layout shift */
+    transition: opacity 0.2s ease-in-out;
+}
+.size-radio-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem; /* 12px */
+}
+.size-radio-group input[type="radio"] {
+    opacity: 0;
+    position: fixed;
+    width: 0;
+}
+.size-radio-group label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    background-color: #f3f4f6; /* light gray */
+    border: 2px solid transparent;
+    border-radius: 0.75rem; /* 12px */
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+}
+.size-radio-group label:hover {
+    border-color: #fb923c; /* light orange */
+}
+
+.size-radio-group input[type="radio"]:checked + label {
+    background-color: #fff7ed; /* extra light orange */
+    border-color: #f97316; /* brand orange */
+    color: #c2410c; /* dark orange text */
+    font-weight: 700;
+}
     </style>
 </head>
 <body class="antialiased"  >
@@ -654,13 +740,44 @@ async function fetchMenuItems() {
         firstCategoryButton.click();
     }
 }
-        function createMenuCardHTML(item) {
-            const priceDisplay = item.sizes ? `<span class="text-xl font-bold text-orange-500">PKR ${item.sizes.Small} - ${item.sizes['Extra Large']}</span>` : `<div><span class="text-xl font-bold text-orange-500">PKR ${item.price}</span>${item.original_price ? `<span class="text-gray-500 line-through text-sm ml-2">PKR ${item.original_price}</span>` : ''}</div>`;
-            const buttonHTML = item.sizes ? `<button class="w-full bg-orange-500 text-white font-semibold py-2 px-4 mt-4 rounded-full hover:bg-orange-600 transition add-to-cart-btn">Select Size</button>` : `<button class="bg-orange-500 text-white font-semibold py-2 px-4 mt-4 rounded-full hover:bg-orange-600 transition add-to-cart-btn">Add to Cart</button>`;
-            const sizeSelectorHTML = item.sizes ? `<div class="size-selector mt-4 px-4 bg-black rounded-lg"><p class="font-bold text-center text-white mb-3">Choose a size:</p><div class="flex flex-col gap-2">${Object.entries(item.sizes).map(([size, price]) => `<button class="size-btn bg-white p-3 rounded-md shadow-sm hover:bg-green-300 w-full" data-size="${size}" data-price="${price}"><div class="flex justify-between items-center font-semibold text-gray-700"><span>${size}</span><span class="text-gray-400 mx-2 flex-grow border-b border-dotted border-gray-400"></span><span>${price} PKR</span></div></button>`).join('')}</div></div>` : '';
-            return `<div class="bg-white rounded-lg shadow-md p-6 menu-card" data-category="${item.category}" data-id="${item.id}" data-name="${item.name}" data-description="${item.description || ''}" data-image="${item.image_url}" ${item.sizes ? `data-sizes='${JSON.stringify(item.sizes)}'` : ''} ${item.price ? `data-price="${item.price}"` : ''}><img src="${item.image_url}" alt="${item.name}" class="w-full h-48 object-cover rounded-md mb-4" loading="lazy"><div class="flex flex-col flex-grow"><h3 class="text-2xl font-semibold text-gray-800">${item.name}</h3><p class="text-gray-600 mt-2 flex-grow">${item.description || ''}</p><div class="mt-4">${priceDisplay}</div>${buttonHTML}${sizeSelectorHTML}</div></div>`;
-        }
-        
+        // REPLACE your createMenuCardHTML function with this one
+function createMenuCardHTML(item) {
+    const priceDisplay = item.sizes ? `<span class="text-xl font-bold text-orange-500">From PKR ${Object.values(item.sizes)[0]}</span>` : `<div><span class="text-xl font-bold text-orange-500">PKR ${item.price}</span>${item.original_price ? `<span class="text-gray-500 line-through text-sm ml-2">PKR ${item.original_price}</span>` : ''}</div>`;
+    const buttonHTML = item.sizes ? `<button class="w-full bg-orange-500 text-white font-semibold py-2 px-4 mt-4 rounded-full hover:bg-orange-600 transition add-to-cart-btn">Select Size</button>` : `<button class="w-full bg-orange-500 text-white font-semibold py-2 px-4 mt-4 rounded-full hover:bg-orange-600 transition add-to-cart-btn">Add to Cart</button>`;
+    
+    // --- [THE FIX IS HERE] ---
+    let sizeSelectorHTML = '';
+    if (item.sizes) {
+        const sizeChips = Object.keys(item.sizes).map(size => {
+            // Check for the "Extra Large" special case
+            const chipText = (size.toLowerCase() === 'extra large') ? 'XL' : size[0];
+            return `<button class="size-chip" data-size="${size}">${chipText}</button>`;
+        }).join('');
+
+        sizeSelectorHTML = `
+            <div class="size-selector mt-4 px-2 py-4 bg-black rounded-lg">
+                <p class="font-bold text-center text-white mb-3">Choose a size:</p>
+                <div class="size-chip-container">${sizeChips}</div>
+                <div class="size-price-display"></div>
+                <button class="add-pizza-btn w-full bg-green-600 text-white font-semibold py-2 px-4 rounded-full hover:bg-green-700 transition opacity-50 cursor-not-allowed" disabled>
+                    Add to Cart
+                </button>
+            </div>
+        `;
+    }
+    // --- END OF FIX ---
+
+    return `<div class="bg-white rounded-lg shadow-md p-6 menu-card" data-category="${item.category}" data-id="${item.id}" data-name="${item.name}" data-description="${item.description || ''}" data-image="${item.image_url}" ${item.sizes ? `data-sizes='${JSON.stringify(item.sizes)}'` : ''} ${item.price ? `data-price="${item.price}"` : ''}>
+                <img src="${item.image_url}" alt="${item.name}" class="w-full h-48 object-cover rounded-md mb-4" loading="lazy">
+                <div class="flex flex-col flex-grow">
+                    <h3 class="text-2xl font-semibold text-gray-800">${item.name}</h3>
+                    <p class="text-gray-600 mt-2 flex-grow">${item.description || ''}</p>
+                    <div class="mt-4">${priceDisplay}</div>
+                    ${buttonHTML}
+                    ${sizeSelectorHTML}
+                </div>
+            </div>`;
+}
         // ========= 6. ORDER FINALIZATION AND SUBMISSION =========
 
         /**
@@ -894,29 +1011,61 @@ if (congratsModal) {
             event.currentTarget.classList.add('bg-red-700', 'text-white');
             updateMenuDisplay();
         }
-// REPLACE this whole function
+// REPLACE your handleMenuInteraction function with this one
 function handleMenuInteraction(e) {
-    const card = e.target.closest('.menu-card'); if (!card) return;
-    const sizeButton = e.target.closest('.size-btn');
-    const mainButton = e.target.closest('.add-to-cart-btn');
+    const card = e.target.closest('.menu-card');
+    if (!card) return; // Exit if the click wasn't on a card at all
 
-    if (sizeButton) {
-        const finalId = `${card.dataset.id}-${sizeButton.dataset.size.toLowerCase()}`;
-        const finalName = `${card.dataset.name} - ${sizeButton.dataset.size}`;
-        // Pass the clicked sizeButton to the function
-        addToCart(finalName, parseFloat(sizeButton.dataset.price), finalId, sizeButton);
+    // Define all possible click targets inside the card
+    const mainButton = e.target.closest('.add-to-cart-btn');
+    const sizeChip = e.target.closest('.size-chip');
+    const addPizzaButton = e.target.closest('.add-pizza-btn');
+    
+    // --- [THE FIX] We now handle each case explicitly and then stop. ---
+
+    // Case 1: User clicked the final "Add Pizza" button inside the selector
+    if (addPizzaButton) {
+        const finalId = `${card.dataset.id}-${addPizzaButton.dataset.size.toLowerCase()}`;
+        const finalName = `${card.dataset.name} - ${addPizzaButton.dataset.size}`;
+        addToCart(finalName, parseFloat(addPizzaButton.dataset.price), finalId, addPizzaButton);
         card.querySelector('.size-selector').classList.remove('selector-open');
-    } else if (mainButton) {
+        return; // Action complete, stop here.
+    }
+
+    // Case 2: User clicked a size chip (S, M, L, XL)
+    if (sizeChip) {
+        const sizeSelector = card.querySelector('.size-selector');
+        const priceDisplay = sizeSelector.querySelector('.size-price-display');
+        const finalAddButton = sizeSelector.querySelector('.add-pizza-btn');
+        const allChips = sizeSelector.querySelectorAll('.size-chip');
+
+        allChips.forEach(chip => chip.classList.remove('selected'));
+        sizeChip.classList.add('selected');
+
+        const sizes = JSON.parse(card.dataset.sizes);
+        const selectedSizeName = sizeChip.dataset.size;
+        const price = sizes[selectedSizeName];
+        
+        priceDisplay.textContent = `PKR ${price.toFixed(2)}`;
+        finalAddButton.classList.remove('opacity-50', 'cursor-not-allowed');
+        finalAddButton.disabled = false;
+        
+        finalAddButton.dataset.size = selectedSizeName;
+        finalAddButton.dataset.price = price;
+        return; // Action complete, stop here.
+    }
+
+    // Case 3: User clicked the main "Select Size" or "Add to Cart" button
+    if (mainButton) {
         if (card.dataset.sizes) {
             card.querySelector('.size-selector').classList.toggle('selector-open');
         } else {
-            // Pass the clicked mainButton to the function
             addToCart(card.dataset.name, parseFloat(card.dataset.price), card.dataset.id, mainButton);
         }
-    } else {
-        openQuickView(card.dataset.id);
+        return; // Action complete, stop here.
     }
-}        
+    openQuickView(card.dataset.id);
+}
         function handleHeroOrderClick(e) {
             const itemCard = allMenuItems.find(card => card.dataset.id === e.currentTarget.dataset.orderId);
             if (itemCard) {
@@ -1089,7 +1238,7 @@ function handleOrderAgain(e) {
         }, 2000);
     }
 }
-        // REPLACE this whole function
+// REPLACE your entire updateCartUI function with this one
 function updateCartUI() {
     cartItemsContainer.innerHTML = ''; 
     let total = 0; 
@@ -1098,30 +1247,46 @@ function updateCartUI() {
     if (itemCount === 0) { 
         cartEmptyMessage.style.display = 'block'; 
         clearCartBtn.style.display = 'none'; 
-        orderTriggerBtns.forEach(b => b.classList.add('opacity-50', 'cursor-not-allowed'));
-        if (stickyCartBtn) stickyCartBtn.classList.remove('visible'); // Hide if cart is emptied
+        getEl('show-receipt-btn').classList.add('opacity-50', 'cursor-not-allowed');
+        if (stickyCartBtn) stickyCartBtn.classList.remove('visible');
     } else { 
         cartEmptyMessage.style.display = 'none'; 
         clearCartBtn.style.display = 'block'; 
-        orderTriggerBtns.forEach(b => b.classList.remove('opacity-50', 'cursor-not-allowed'));
+        getEl('show-receipt-btn').classList.remove('opacity-50', 'cursor-not-allowed');
+        
         cart.forEach(item => { 
-            const itemElement = document.createElement('div'); 
-            itemElement.className = 'flex justify-between items-center py-2 border-b border-gray-200'; 
-            itemElement.innerHTML = `<div class="flex-grow pr-4"><span class="font-bold text-lg text-gray-800">${item.name}</span><p class="text-sm text-gray-500">PKR ${item.price.toFixed(2)} each</p></div><div class="flex items-center space-x-3"><button class="quantity-btn-modern decrease-quantity-btn" data-id="${item.id}">-</button><span class="text-lg font-semibold w-8 text-center">${item.quantity}</span><button class="quantity-btn-modern increase-quantity-btn" data-id="${item.id}">+</button></div><div class="w-24 text-right"><span class="font-semibold text-orange-500">PKR ${(item.price * item.quantity).toFixed(2)}</span></div>`; 
+            const itemElement = document.createElement('div');
+            itemElement.className = 'flex flex-col sm:flex-row justify-between items-start sm:items-center py-4 border-b border-gray-200'; 
+            
+            itemElement.innerHTML = `
+                <div class="mb-2 sm:mb-0">
+                    <span class="font-bold text-lg text-gray-800">${item.name}</span>
+                    <p class="text-sm text-gray-500">PKR ${item.price.toFixed(2)} each</p>
+                </div>
+                <div class="flex items-center justify-between w-full sm:w-auto">
+                    <div class="flex items-center space-x-3">
+                        <button class="quantity-btn-brand decrease-quantity-btn" data-id="${item.id}">-</button>
+                        <span class="text-lg font-semibold w-8 text-center">${item.quantity}</span>
+                        <button class="quantity-btn-brand increase-quantity-btn" data-id="${item.id}">+</button>
+                    </div>
+                    <div class="sm:ml-6 text-right">
+                        <span class="font-semibold text-lg text-orange-500">PKR ${(item.price * item.quantity).toFixed(2)}</span>
+                    </div>
+                </div>
+            `;
+            // --- END OF FIX ---
+
             cartItemsContainer.appendChild(itemElement); 
             total += item.price * item.quantity; 
         }); 
     } 
     
-    // Update main cart UI
     cartTotalSpan.textContent = `PKR ${total.toFixed(2)}`; 
     cartCountSpan.textContent = itemCount; 
     
-    // [NEW] Update sticky cart UI
     if (stickyCartBtn) {
-        stickyCartCount.textContent = `${itemCount} Item${itemCount > 1 ? 's' : ''}`;
+        stickyCartCount.textContent = `${itemCount} Item${itemCount !== 1 ? 's' : ''}`;
         stickyCartTotal.textContent = `PKR ${total.toFixed(2)}`;
-        // Manually trigger scroll handler in case user adds item without scrolling
         handleScroll();
     }
     
@@ -1175,37 +1340,91 @@ function showToastNotification(message, type = 'success') {
     }, 3000); 
 }
 
-        function openQuickView(itemId) {
-            const card = allMenuItems.find(c => c.dataset.id === itemId);
-            if (!card) return;
-            const item = card.dataset;
-            getEl('quick-view-image').src = item.image;
-            getEl('quick-view-title').textContent = item.name;
-            getEl('quick-view-description').textContent = item.description;
-
-            const sizes = item.sizes ? JSON.parse(item.sizes) : null;
-            if (sizes) {
-                let buttonsHTML = `<p class="font-bold text-lg mb-2">Choose a size:</p>`;
-                for (const [size, price] of Object.entries(sizes)) {
-                    buttonsHTML += `<button class="size-btn bg-gray-100 p-3 rounded-md shadow-sm hover:bg-green-300 w-full mb-2" data-name="${item.name}" data-price="${price}" data-id="${item.id}" data-size="${size}"><div class="flex justify-between items-center font-semibold text-gray-700"><span>${size}</span><span class="text-gray-400 mx-2 flex-grow border-b border-dotted border-gray-400"></span><span>${price} PKR</span></div></button>`;
-                }
-                quickViewOptions.innerHTML = buttonsHTML;
-            } else {
-                quickViewOptions.innerHTML = `<button class="w-full bg-orange-500 text-white font-semibold py-3 px-6 mt-4 rounded-full hover:bg-orange-600 transition" data-name="${item.name}" data-price="${item.price}" data-id="${item.id}">Add to Cart - PKR ${item.price}</button>`;
-            }
-            quickViewModal.style.display = 'flex';
-        }
-function handleQuickViewAddToCart(e) {
-    const button = e.target.closest('[data-price]');
-    if (!button) return;
+        // REPLACE your openQuickView function with this one
+function openQuickView(itemId) {
+    const card = allMenuItems.find(c => c.dataset.id === itemId);
+    if (!card) return;
+    const item = card.dataset;
     
-    const { name, price, id, size } = button.dataset;
-    const finalName = size ? `${name} - ${size}` : name;
-    const finalId = size ? `${id}-${size.toLowerCase()}` : id;
-    addToCart(finalName, parseFloat(price), finalId, button);
-    setTimeout(() => {
-        quickViewModal.style.display = 'none';
-    }, 500);
+    getEl('quick-view-image').src = item.image;
+    getEl('quick-view-title').textContent = item.name;
+    getEl('quick-view-description').textContent = item.description;
+
+    const optionsContainer = getEl('quick-view-options');
+    optionsContainer.innerHTML = ''; // Clear previous options
+    
+    const sizes = item.sizes ? JSON.parse(item.sizes) : null;
+
+    if (sizes) {
+        // --- [THE FIX IS HERE] ---
+        let buttonsHTML = `<p class="font-bold text-lg mb-3">Choose a size:</p>`;
+        buttonsHTML += `<div class="size-radio-group">`;
+        
+        Object.entries(sizes).forEach(([size, price], index) => {
+            const uniqueId = `size-${item.id}-${index}`; // Create a unique ID for the radio button
+            buttonsHTML += `
+                <div>
+                    <input type="radio" id="${uniqueId}" name="pizza-size-${item.id}" value="${size}" data-price="${price}">
+                    <label for="${uniqueId}">
+                        <span class="font-semibold">${size}</span>
+                        <span class="text-gray-400 mx-2 flex-grow border-b border-dotted border-gray-400"></span>
+                        <span>PKR ${price.toFixed(2)}</span>
+                    </label>
+                </div>
+            `;
+        });
+        buttonsHTML += `</div>`;
+        buttonsHTML += `<button id="quick-view-add-btn" class="w-full bg-orange-500 text-white font-semibold py-3 px-6 mt-6 rounded-full hover:bg-orange-600 transition opacity-50 cursor-not-allowed" disabled>Add to Cart</button>`;
+        // --- END OF FIX ---
+        
+        optionsContainer.innerHTML = buttonsHTML;
+
+    } else {
+        // For non-pizza items, create a simple "Add to Cart" button
+        optionsContainer.innerHTML = `<button class="w-full bg-orange-500 text-white font-semibold py-3 px-6 mt-4 rounded-full hover:bg-orange-600 transition" data-name="${item.name}" data-price="${item.price}" data-id="${item.id}">Add to Cart - PKR ${item.price}</button>`;
+    }
+
+    quickViewModal.style.display = 'flex';
+}
+// REPLACE your handleQuickViewAddToCart function with this one
+function handleQuickViewAddToCart(e) {
+    // --- Logic for items with sizes (pizzas) ---
+    const radioGroup = e.target.closest('.size-radio-group');
+    if (radioGroup) {
+        const finalAddButton = getEl('quick-view-add-btn');
+        if (finalAddButton) {
+            finalAddButton.classList.remove('opacity-50', 'cursor-not-allowed');
+            finalAddButton.disabled = false;
+        }
+        return; // Just enable the button, don't add to cart yet
+    }
+
+    const finalAddButton = e.target.closest('#quick-view-add-btn');
+    if (finalAddButton) {
+        const selectedRadio = quickViewOptions.querySelector('input[type="radio"]:checked');
+        if (selectedRadio) {
+            const card = allMenuItems.find(c => c.dataset.id.startsWith(selectedRadio.name.replace('pizza-size-', '')));
+            const size = selectedRadio.value;
+            const price = selectedRadio.dataset.price;
+            const name = card.dataset.name;
+            const id = card.dataset.id;
+            
+            const finalName = `${name} - ${size}`;
+            const finalId = `${id}-${size.toLowerCase()}`;
+            addToCart(finalName, parseFloat(price), finalId, finalAddButton);
+            
+            setTimeout(() => { quickViewModal.style.display = 'none'; }, 500);
+        }
+        return;
+    }
+
+    // --- Logic for items without sizes (burgers, etc.) ---
+    const simpleAddButton = e.target.closest('[data-price]');
+    if (simpleAddButton && !simpleAddButton.id) {
+        const { name, price, id } = simpleAddButton.dataset;
+        addToCart(name, parseFloat(price), id, simpleAddButton);
+        setTimeout(() => { quickViewModal.style.display = 'none'; }, 500);
+    }
 }
         function setupScrollAnimations() { const observer = new IntersectionObserver((entries) => { entries.forEach(entry => { if (entry.isIntersecting) { entry.target.classList.add('fade-in-up'); observer.unobserve(entry.target); } }); }, { threshold: 0.1 }); queryAll('[data-animation="fade-in-up"]').forEach(section => { section.classList.add('opacity-0'); observer.observe(section); }); }
         function setupHeroSlider() { const slidesContainer = getEl("slides-container"), sliderDotsContainer = getEl("slider-dots"); if (!slidesContainer || !sliderDotsContainer) return; const slides = slidesContainer.children, numSlides = slides.length; let currentSlide = 0, slideInterval; for (let i = 0; i < numSlides; i++) { const dot = document.createElement("button"); dot.className = "w-3 h-3 rounded-full transition-colors duration-300"; dot.setAttribute("aria-label", `Go to slide ${i + 1}`); dot.addEventListener("click", () => { goToSlide(i); resetInterval(); }); sliderDotsContainer.appendChild(dot); } const dots = sliderDotsContainer.children; const goToSlide = (slideIndex) => { slidesContainer.style.transform = `translateX(-${slideIndex * 100}%)`; currentSlide = slideIndex; updateDots(); }; const updateDots = () => { for (let i = 0; i < numSlides; i++) { dots[i].classList.toggle("bg-white", i === currentSlide); dots[i].classList.toggle("bg-white/50", i !== currentSlide); } }; const nextSlide = () => goToSlide((currentSlide + 1) % numSlides); const startInterval = () => slideInterval = setInterval(nextSlide, 5000); const resetInterval = () => { clearInterval(slideInterval); startInterval(); }; goToSlide(0); startInterval(); }    
@@ -1270,7 +1489,7 @@ function handleQuickViewAddToCart(e) {
         </div>
     </div>
 </div>
-<div id="sticky-cart-button" class="sticky-cart-container">
+<div id="sticky-cart-button" class="sticky-cart-container pulse-btn">
     <div class="flex justify-between items-center w-full">
         <div>
             <span id="sticky-cart-count" class="font-bold">0 Items</span>
