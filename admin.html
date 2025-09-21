@@ -4,64 +4,54 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Panel - Pixel Tales</title>
- <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
-
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        /* [NEW] Apply the Inter font to the entire page */
-        body {
-         font-family: 'Poppins', sans-serif;
-        }
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <style>
-        /* Simple styling for the order cards */
-        .order-card {
-            border-left-width: 5px;
-            transition: all 0.2s ease-in-out;
-        }
-        .order-card.status-pending { border-color: #22c55e; } /* Green */
-        .order-card.status-preparing { border-color: #f59e0b; } /* Amber */
-        .order-card.status-completed { border-color: #6b7280; opacity: 0.7; } /* Gray */
-        .order-card.selected {
-            transform: scale(1.02);
-            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
-        }
-.order-card:hover {
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-}
+        body { font-family: 'Inter', sans-serif; }
+        .order-card { border-left-width: 5px; transition: all 0.2s ease-in-out; }
+        .order-card.status-pending { border-color: #22c55e; }
+        .order-card.status-preparing { border-color: #f59e0b; }
+        .order-card.status-completed { border-color: #6b7280; opacity: 0.7; }
+        .order-card:hover, .order-card.selected { transform: scale(1.02); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05); }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        #admin-panel section, #admin-panel #page-container { animation: fadeIn 0.5s ease-out forwards; }
+        @keyframes slideInDown { from { opacity: 0; transform: translateY(-20px); max-height: 0; padding-top: 0; padding-bottom: 0; margin-bottom: 0; } to { opacity: 1; transform: translateY(0); max-height: 200px; padding-top: 1rem; padding-bottom: 1rem; margin-bottom: 1rem; } }
+        .order-card.new-order-animation { animation: slideInDown 0.5s ease-out forwards; }
+        #details-content { transition: opacity 0.3s ease-in-out; }
+        .nav-btn { transition: all 0.2s ease-in-out; }
+        .nav-btn.active { background-color: white; color: #2563eb; box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1); }
+        .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); border: 0; }
+        input:checked ~ .dot { transform: translateX(100%); background-color: #ffffff; }
+        input:checked ~ .block { background-color: #22c55e; }
     </style>
 </head>
-<body class="bg-gray-100 font-sans">
-<header class="bg-white shadow-md">
-    <nav class="container mx-auto px-6 py-4 flex justify-between items-center">
-        <div class="flex items-center space-x-4">
-            <img src="https://img.freepik.com/premium-vector/burger-logo_1366-144.jpg" alt="Pixel Tales Logo" class="h-16">
-            <h1 class="text-3xl font-bold text-gray-800">Admin Panel</h1>
-        </div>
-<div>
-        <button id="sound-toggle-btn" class="bg-red-500 text-white font-semibold py-2 px-4 rounded-lg flex items-center space-x-2">
-            <svg id="sound-off-icon" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" clip-rule="evenodd" />
-                <path stroke-linecap="round" stroke-linejoin="round" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" />
-            </svg>
-            <svg id="sound-on-icon" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
-            </svg>
-            <span id="sound-status-text">Sounds Off</span>
-        </button>
-    </div>
-</nav>
-        <div>
-            <!-- We can add a "Logout" button or other controls here later -->
-        </div>
-    </nav>
-</header>
+<body class="bg-gray-100">
+
+    <header class="bg-white shadow-md">
+        <nav class="container mx-auto px-6 py-4 flex justify-between items-center">
+            <div class="flex items-center space-x-4">
+                <img src="https://img.freepik.com/premium-vector/burger-logo_1366-144.jpg" alt="Pixel Tales Logo" class="h-16">
+                <div class="flex items-center space-x-2 rounded-lg bg-gray-100 p-1">
+                    <button id="nav-orders-btn" class="nav-btn active bg-white text-blue-600 shadow rounded-md font-semibold py-2 px-4">View Orders</button>
+                    <button id="nav-menu-btn" class="nav-btn text-gray-500 font-semibold py-2 px-4">Manage Menu</button>
+                </div>
+            </div>
+            <div class="flex items-center space-x-4"> 
+                <button id="sound-toggle-btn" class="bg-red-500 text-white font-semibold py-2 px-4 rounded-lg flex items-center space-x-2">
+                    <svg id="sound-off-icon" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" clip-rule="evenodd" /><path stroke-linecap="round" stroke-linejoin="round" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" /></svg>
+                    <svg id="sound-on-icon" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" /></svg>
+                    <span id="sound-status-text">Sounds Off</span>
+                </button>
+                <button id="logout-btn" class="bg-gray-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-gray-700 transition duration-300">
+                    Logout
+                </button>
+            </div>
+        </nav>
+    </header>
+
     <div id="password-prompt" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50">
         <div class="bg-white p-8 rounded-lg shadow-xl text-center">
             <h2 class="text-2xl font-bold mb-4">Admin Access</h2>
@@ -71,34 +61,125 @@
         </div>
     </div>
 
-    <div id="admin-panel" class="hidden grid grid-cols-1 md:grid-cols-3 gap-6 p-6 min-h-screen">
-        <!-- Column 1: Live Order Feed -->
-        <aside class="md:col-span-1 bg-white p-6 rounded-lg shadow-lg h-full">
-            <h2 class="text-3xl font-bold border-b pb-4 mb-4">Incoming Orders</h2>
-            <div id="orders-feed" class="space-y-4 overflow-y-auto max-h-[85vh]">
-                <!-- Orders will be dynamically inserted here -->
-                <p id="loading-orders" class="text-gray-500">Loading orders...</p>
+    <div id="admin-panel" class="hidden p-6 space-y-6">
+        <section id="dashboard-summary">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="bg-white p-6 rounded-lg shadow-lg flex items-center justify-between"><div><p class="text-sm font-medium text-gray-500">New Orders</p><p id="stat-new-orders" class="text-3xl font-bold text-green-500">0</p></div><div class="bg-green-100 p-3 rounded-full"><svg class="h-8 w-8 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg></div></div>
+                <div class="bg-white p-6 rounded-lg shadow-lg flex items-center justify-between"><div><p class="text-sm font-medium text-gray-500">In Progress</p><p id="stat-in-progress" class="text-3xl font-bold text-amber-500">0</p></div><div class="bg-amber-100 p-3 rounded-full"><svg class="h-8 w-8 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg></div></div>
+                <div class="bg-white p-6 rounded-lg shadow-lg flex items-center justify-between"><div><p class="text-sm font-medium text-gray-500">Total Sales Today</p><p id="stat-sales-today" class="text-3xl font-bold text-blue-600">PKR 0</p></div><div class="bg-blue-100 p-3 rounded-full"><svg class="h-8 w-8 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v.01" /></svg></div></div>
             </div>
-        </aside>
-
-        <!-- Column 2: Order Details -->
-        <main class="md:col-span-2 bg-white p-8 rounded-lg shadow-lg h-full">
-            <div id="order-details-view">
-                <div id="no-order-selected" class="text-center text-gray-400">
-                    <h3 class="text-2xl font-semibold">Select an order to view details</h3>
-                    <p class="mt-2">New orders will appear on the left.</p>
-                </div>
-                
-                <div id="details-content" class="hidden">
-                    <!-- Order Details will be dynamically inserted here -->
+        </section>
+        
+        <div id="page-container">
+            <div id="orders-page">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <aside class="md:col-span-1 bg-white p-6 rounded-lg shadow-lg h-full">
+                        <h2 class="text-3xl font-bold border-b pb-4 mb-4">Incoming Orders</h2>
+                        <div id="filter-buttons" class="flex space-x-2 mb-4">
+                            <button data-status="active" class="filter-btn flex-1 bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg">Active</button>
+                            <button data-status="Preparing" class="filter-btn flex-1 bg-gray-200 text-gray-700 font-semibold py-2 px-4 rounded-lg">Preparing</button>
+                            <button data-status="Completed" class="filter-btn flex-1 bg-gray-200 text-gray-700 font-semibold py-2 px-4 rounded-lg">Completed</button>
+                        </div>
+                        <div id="orders-feed" class="space-y-4 overflow-y-auto max-h-[85vh]">
+                            <p id="loading-orders" class="text-gray-500">Loading orders...</p>
+                        </div>
+                    </aside>
+                    <main class="md:col-span-2 bg-white p-8 rounded-lg shadow-lg h-full">
+                        <div id="order-details-view">
+                            <div id="no-order-selected" class="text-center text-gray-400"><h3 class="text-2xl font-semibold">Select an order to view details</h3><p class="mt-2">New orders will appear on the left.</p></div>
+                            <div id="details-content" class="hidden"></div>
+                        </div>
+                    </main>
                 </div>
             </div>
-        </main>
+        <div id="menu-page" class="hidden">
+            <div class="bg-white p-6 rounded-lg shadow-lg">
+                <div class="flex justify-between items-center border-b pb-4 mb-4">
+                    <h2 class="text-3xl font-bold">Menu Items</h2>
+                    <button id="add-new-item-btn" class="bg-green-500 text-white font-semibold py-2 px-4 rounded-lg hover:bg-green-600">
+                        + Add New Item
+                    </button>
+                </div>
+                <div id="menu-management-list" class="divide-y divide-gray-200">
+                    <!-- Menu item list will be dynamically inserted here by JavaScript -->
+                    <p>Loading menu...</p>
+                </div>
+            </div>
+        </div>
     </div>
-<audio id="notification-sound" src="./notify.mp3" preload="auto"></audio>
-<script src="admin.js"></script> 
-    <!-- JavaScript for the Admin Panel -->
-    <script src="admin.js"></script>
+</div>
+       <audio id="notification-sound" src="./notify.mp3" preload="auto"></audio>
+    <div id="item-modal" class="fixed inset-0 bg-gray-900 bg-opacity-75 hidden items-center justify-center z-50 p-4">
+    <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+        <h2 id="modal-title" class="text-3xl font-bold mb-6">Add New Item</h2>
+        <!-- We use a <form> tag for better structure -->
+        <form id="item-form" class="space-y-4">
+            <!-- Hidden input to store the item ID when editing -->
+            <input type="hidden" id="item-id-input">
+<div>
+                <label for="item-name" class="block font-semibold">Item Name</label>
+                <input type="text" id="item-name" class="w-full p-2 border rounded-md" required>
+            </div>
+            <div>
+                <label for="item-description" class="block font-semibold">Description</label>
+                <textarea id="item-description" rows="3" class="w-full p-2 border rounded-md"></textarea>
+            </div>
+            <div>
+                <label for="item-category" class="block font-semibold">Category</label>
+                <select id="item-category" class="w-full p-2 border rounded-md" required>
+                    <!-- Categories will be populated by JavaScript -->
+                </select>
+            </div>
+            <div>
+                <label for="item-image-url" class="block font-semibold">Image URL</label>
+                <input type="url" id="item-image-url" class="w-full p-2 border rounded-md" required>
+            </div>
 
+            <div class="pt-4">
+                <h3 class="text-xl font-semibold mb-2">Pricing</h3>
+                <p class="text-sm text-gray-500 mb-4">Fill in the 'Regular Price' for normal items (burgers, drinks). For pizzas, leave 'Regular Price' empty and fill in the size prices below.</p>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label for="item-price" class="block font-semibold">Regular Price</label>
+                        <input type="number" id="item-price" placeholder="e.g., 550" class="w-full p-2 border rounded-md">
+                    </div>
+                    <div>
+                        <label for="item-original-price" class="block font-semibold">Original Price (for discounts)</label>
+                        <input type="number" id="item-original-price" placeholder="e.g., 650" class="w-full p-2 border rounded-md">
+                    </div>
+                </div>
+<div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
+                    <div>
+                        <label for="price-small" class="block font-semibold">Price (Small)</label>
+                        <input type="number" id="price-small" class="w-full p-2 border rounded-md">
+                    </div>
+                     <div>
+                        <label for="price-medium" class="block font-semibold">Price (Medium)</label>
+                        <input type="number" id="price-medium" class="w-full p-2 border rounded-md">
+                    </div>
+                     <div>
+                        <label for="price-large" class="block font-semibold">Price (Large)</label>
+                        <input type="number" id="price-large" class="w-full p-2 border rounded-md">
+                    </div>
+                     <div>
+                        <label for="price-xl" class="block font-semibold">Price (XL)</label>
+                        <input type="number" id="price-xl" class="w-full p-2 border rounded-md">
+                    </div>
+                </div>
+            </div>
+            <div class="flex items-center space-x-4 pt-4">
+                <input type="checkbox" id="item-featured" class="h-5 w-5">
+                <label for="item-featured" class="font-semibold">Feature this item on the homepage slider?</label>
+            </div>
+            <!-- Form Action Buttons -->
+            <div class="flex justify-end space-x-4 pt-6">
+                <button type="button" id="cancel-item-btn" class="bg-gray-200 text-gray-700 font-semibold py-2 px-6 rounded-lg hover:bg-gray-300">Cancel</button>
+                <button type="submit" id="save-item-btn" class="bg-blue-600 text-white font-semibold py-2 px-6 rounded-lg hover:bg-blue-700">Save Item</button>
+            </div>
+        </form>
+    </div>
+</div>
+<!-- Load the script ONCE at the end of the body -->
+    <script src="admin.js"></script>
 </body>
 </html>

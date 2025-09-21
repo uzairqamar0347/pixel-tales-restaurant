@@ -3,11 +3,13 @@ document.addEventListener('DOMContentLoaded', () => {
     // ========= 1. SETUP & CONFIGURATION =========
     const SUPABASE_URL = 'https://fiuckqvkzcbbufueomff.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZpdWNrcXZremNiYnVmdWVvbWZmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgxOTM0ODAsImV4cCI6MjA3Mzc2OTQ4MH0.ETayy6vn87DyfkpdnNCoO5GCnR2a88H9aqD5aGdoCZ4';
-    const ADMIN_PASSWORD = 'UZAIRQAMAR0347@';
+    const ADMIN_PASSWORD = '0000';
     const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     
     // ========= 2. ELEMENT SELECTORS =========
     const getEl = (id) => document.getElementById(id);
+    const queryAll = (selector) => document.querySelectorAll(selector);
+    // (All selectors are defined once, cleanly)
     const passwordPrompt = getEl('password-prompt');
     const passwordInput = getEl('password-input');
     const passwordSubmit = getEl('password-submit');
@@ -21,23 +23,38 @@ document.addEventListener('DOMContentLoaded', () => {
     const soundOnIcon = getEl('sound-on-icon');
     const soundOffIcon = getEl('sound-off-icon');
     const soundStatusText = getEl('sound-status-text');
+    const statNewOrders = getEl('stat-new-orders');
+    const statInProgress = getEl('stat-in-progress');
+    const statSalesToday = getEl('stat-sales-today');
+    const logoutBtn = getEl('logout-btn');
+    const navOrdersBtn = getEl('nav-orders-btn');
+    const navMenuBtn = getEl('nav-menu-btn');
+    const ordersPage = getEl('orders-page');
+    const menuPage = getEl('menu-page');
+    const menuManagementList = getEl('menu-management-list');
+    const addNewItemBtn = getEl('add-new-item-btn');
+    const itemModal = getEl('item-modal');
+    const itemForm = getEl('item-form');
+    const modalTitle = getEl('modal-title');
+    const cancelItemBtn = getEl('cancel-item-btn');
+    const itemIdInput = getEl('item-id-input');
 
     // ========= 3. GLOBAL STATE =========
     let allOrders = [];
+    let allMenuItems = []; // Array to hold all menu items for editing
     let soundEnabled = false;
     let ordersChannel = null;
+    let activeFilter = 'active';
 
     // ========= 4. FUNCTION DEFINITIONS (DEFINED BEFORE USE) =========
 
     // --- PASSWORD & INITIALIZATION ---
     function checkPassword() {
         if (passwordInput.value.trim() === ADMIN_PASSWORD.trim()) {
-            // A direct user click is happening, so this is the best time to "unlock" audio.
             notificationSound.muted = false;
             notificationSound.play().catch(() => {});
             notificationSound.pause();
             notificationSound.currentTime = 0;
-
             passwordPrompt.style.display = 'none';
             adminPanel.classList.remove('hidden');
             initializeApp();
@@ -51,8 +68,8 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log("Admin Panel Initialized.");
         await fetchInitialOrders();
         listenForNewOrders();
-    }
-    
+        updateDashboardStats();
+    }    
     // --- DATA & REAL-TIME FUNCTIONS ---
     async function fetchInitialOrders() {
         console.log("Fetching initial orders...");
@@ -72,12 +89,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 ordersFeed.appendChild(orderCard);
             });
         }
+        filterOrders(); // Apply initial filter
     }
 
     function listenForNewOrders() {
-        console.log("Subscribing to real-time changes...");
-        if (ordersChannel) { db.removeChannel(ordersChannel); }
-
+        console.log("Attempting to subscribe to real-time changes...");
+        const allSubscriptions = db.getChannels();
+        if (allSubscriptions.length > 0) {
+            console.log(`Found and removing ${allSubscriptions.length} existing channel subscriptions.`);
+            db.removeChannel(...allSubscriptions);
+        }
         ordersChannel = db.channel('public:orders')
             .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, (payload) => {
                 console.log('Change received!', payload);
@@ -110,12 +131,130 @@ document.addEventListener('DOMContentLoaded', () => {
                         showOrderDetails(updatedOrder);
                     }
                 }
+                filterOrders();
+                updateDashboardStats();
             })
             .subscribe((status) => {
-                if (status === 'SUBSCRIBED') { console.log('Successfully subscribed to orders channel!'); }
+                if (status === 'SUBSCRIBED') { console.log('Successfully subscribed to a NEW orders channel!'); }
             });
     }
+// ADD these two new functions to the DATA & REAL-TIME section
 
+async function fetchAndDisplayMenu() {
+        menuManagementList.innerHTML = '<p>Loading menu...</p>';
+        const { data, error } = await db.from('menu_items').select('*').order('category').order('name');
+        if (error) {
+            console.error("Error fetching menu for management:", error);
+            menuManagementList.innerHTML = '<p class="text-red-500">Could not load menu.</p>';
+            return;
+        }
+        
+        allMenuItems = data; // [FIX] Store the fetched menu items
+        menuManagementList.innerHTML = '';
+        
+        allMenuItems.forEach(item => {
+            const itemDiv = document.createElement('div');
+            itemDiv.className = 'flex items-center justify-between py-4';
+            const isChecked = item.is_available ? 'checked' : '';
+            itemDiv.innerHTML = `<div class="flex items-center"><img src="${item.image_url}" alt="${item.name}" class="h-12 w-12 object-cover rounded-md mr-4"><div><p class="font-bold">${item.name}</p><p class="text-sm text-gray-500">${item.category}</p></div></div><div class="flex items-center space-x-4"><label for="toggle-${item.id}" class="flex items-center cursor-pointer"><div class="relative"><input type="checkbox" id="toggle-${item.id}" class="sr-only availability-toggle" data-id="${item.id}" ${isChecked}><div class="block bg-gray-600 w-14 h-8 rounded-full"></div><div class="dot absolute left-1 top-1 bg-white w-6 h-6 rounded-full transition"></div></div></label><button data-id="${item.id}" class="edit-item-btn text-blue-500 hover:text-blue-700">Edit</button></div>`;
+            menuManagementList.appendChild(itemDiv);
+        });
+
+        document.querySelectorAll('.availability-toggle').forEach(toggle => toggle.addEventListener('change', handleAvailabilityToggle));
+        document.querySelectorAll('.edit-item-btn').forEach(button => button.addEventListener('click', (e) => openItemModal(e.currentTarget.dataset.id)));
+    }
+async function handleAvailabilityToggle(event) {
+    const toggle = event.currentTarget;
+    const itemId = toggle.dataset.id;
+    const isAvailable = toggle.checked;
+
+    toggle.disabled = true; // Prevent rapid clicking
+
+    const { error } = await db
+        .from('menu_items')
+        .update({ is_available: isAvailable })
+        .eq('id', itemId);
+
+    if (error) {
+        console.error("Error updating availability:", error);
+        alert("Could not update item availability.");
+        // Revert the toggle on error
+        toggle.checked = !isAvailable;
+    } else {
+        console.log(`Item #${itemId} availability set to ${isAvailable}`);
+        // Success!
+    }
+
+    toggle.disabled = false;
+}
+// ADD these new functions
+async function openItemModal(itemId = null) {
+        itemForm.reset();
+        itemIdInput.value = '';
+        const categorySelect = getEl('item-category');
+        const { data: categories } = await db.from('categories').select('name');
+        if (categories) {
+            categorySelect.innerHTML = categories.map(cat => `<option value="${cat.name.toLowerCase().replace(/\s+/g, '-')}">${cat.name}</option>`).join('');
+        }
+        if (itemId) {
+            modalTitle.textContent = 'Edit Menu Item';
+            // [FIX] Correctly find the item in allMenuItems
+            const itemToEdit = allMenuItems.find(item => item.id == itemId); // Use == for type flexibility
+            if (!itemToEdit) { alert("Item not found!"); return; }
+            itemIdInput.value = itemToEdit.id;
+            getEl('item-name').value = itemToEdit.name;
+            getEl('item-description').value = itemToEdit.description;
+            getEl('item-category').value = itemToEdit.category;
+            getEl('item-image-url').value = itemToEdit.image_url;
+            getEl('item-price').value = itemToEdit.price;
+            getEl('item-original-price').value = itemToEdit.original_price;
+            getEl('price-small').value = itemToEdit.price_small;
+            getEl('price-medium').value = itemToEdit.price_medium;
+            getEl('price-large').value = itemToEdit.price_large;
+            getEl('price-xl').value = itemToEdit.price_xl;
+            getEl('item-featured').checked = itemToEdit.is_featured;
+        } else {
+            modalTitle.textContent = 'Add New Item';
+        }
+        itemModal.classList.replace('hidden', 'flex');
+    }
+async function handleFormSubmit(event) {
+    event.preventDefault(); // Prevent the form from reloading the page
+    const saveButton = getEl('save-item-btn');
+    saveButton.textContent = 'Saving...';
+    saveButton.disabled = true;
+    const itemId = itemIdInput.value;
+    const itemData = {
+        name: getEl('item-name').value,
+        description: getEl('item-description').value,
+        category: getEl('item-category').value,
+        image_url: getEl('item-image-url').value,
+        price: getEl('item-price').value || null,
+        original_price: getEl('item-original-price').value || null,
+        price_small: getEl('price-small').value || null,
+        price_medium: getEl('price-medium').value || null,
+        price_large: getEl('price-large').value || null,
+        price_xl: getEl('price-xl').value || null,
+        is_featured: getEl('item-featured').checked,
+    };
+    let result;
+    if (itemId) {
+        // Update existing item
+        result = await db.from('menu_items').update(itemData).eq('id', itemId);
+    } else {
+        // Create new item
+        result = await db.from('menu_items').insert([itemData]);
+    }
+    if (result.error) {
+        console.error("Error saving item:", result.error);
+        alert("Failed to save item. Check the console for details.");
+    } else {
+        itemModal.classList.replace('flex', 'hidden');
+        await fetchAndDisplayMenu(); // Refresh the menu list
+    }
+    saveButton.textContent = 'Save Item';
+    saveButton.disabled = false;
+}
     async function handleStatusUpdate(event) {
         const button = event.currentTarget;
         const orderId = Number(button.dataset.id);
@@ -123,17 +262,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const originalButtonHTML = button.innerHTML;
         button.innerHTML = 'Updating...';
         button.disabled = true;
-
         const { error } = await db.from('orders').update({ status: nextStatus }).eq('id', orderId);
-
         if (error) {
             alert(`Error: ${error.message}`);
             button.innerHTML = originalButtonHTML;
             button.disabled = false;
         } else {
             console.log(`Order #${orderId} status updated to ${nextStatus}`);
-            // The real-time listener will now handle the UI update.
-            // For instant feedback, we can manually update the details view.
             const updatedOrder = allOrders.find(o => o.id === orderId);
             if (updatedOrder) {
                 updatedOrder.status = nextStatus;
@@ -141,7 +276,24 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
     }
-
+    async function updateDashboardStats() {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const todayISO = today.toISOString();
+        const { data: todaysOrders, error } = await db.from('orders').select('status, total_price').gte('created_at', todayISO);
+        if (error) { console.error("Error fetching dashboard data:", error); return; }
+        let newOrdersCount = 0;
+        let inProgressCount = 0;
+        let totalSales = 0;
+        todaysOrders.forEach(order => {
+            if (order.status === 'Pending') newOrdersCount++;
+            if (order.status === 'Preparing') inProgressCount++;
+            totalSales += order.total_price;
+        });
+        statNewOrders.textContent = newOrdersCount;
+        statInProgress.textContent = inProgressCount;
+        statSalesToday.textContent = `PKR ${totalSales.toFixed(2)}`;
+    }
     // --- UI RENDERING FUNCTIONS ---
     function renderOrderCard(order) {
         const orderDate = new Date(order.created_at);
@@ -160,7 +312,63 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         return card;
     }
-
+    // REPLACE this function
+function filterOrders() {
+    const orderCards = queryAll('.order-card');
+    orderCards.forEach(card => {
+        const orderId = Number(card.dataset.orderId);
+        const order = allOrders.find(o => o.id === orderId);
+        if (!order) return;
+        // --- [NEW LOGIC] ---
+        // Handle the new "active" filter
+        if (activeFilter === 'active') {
+            if (order.status === 'Pending' || order.status === 'Preparing') {
+                card.style.display = 'block';
+            } else {
+                card.style.display = 'none'; // Hide completed orders
+            }
+        } else {
+            // Handle specific status filters (Pending, Preparing, Completed)
+            if (order.status === activeFilter) {
+                card.style.display = 'block';
+            } else {
+                card.style.display = 'none';
+            }
+        }
+    });
+    // Update the visual state of the filter buttons
+    const filterButtons = queryAll('.filter-btn');
+    filterButtons.forEach(button => {
+        if (button.dataset.status === activeFilter) {
+            button.classList.remove('bg-gray-200', 'text-gray-700');
+            button.classList.add('bg-blue-600', 'text-white');
+        } else {
+            button.classList.remove('bg-blue-600', 'text-white');
+            button.classList.add('bg-gray-200', 'text-gray-700');
+        }
+    });
+}
+// ADD this new function to the UI RENDERING section
+function showPage(pageName) {
+    // Hide all pages
+    ordersPage.classList.add('hidden');
+    menuPage.classList.add('hidden');
+    // Deactivate all nav buttons
+    navOrdersBtn.classList.remove('active', 'bg-white', 'text-blue-600', 'shadow');
+    navMenuBtn.classList.remove('active', 'bg-white', 'text-blue-600', 'shadow');
+    // Show the selected page and activate its button
+    if (pageName === 'orders') {
+        ordersPage.classList.remove('hidden');
+        navOrdersBtn.classList.add('active', 'bg-white', 'text-blue-600', 'shadow');
+    } else if (pageName === 'menu') {
+        menuPage.classList.remove('hidden');
+        navMenuBtn.classList.add('active', 'bg-white', 'text-blue-600', 'shadow');
+        // Fetch the menu list when the page is shown for the first time
+        if (menuManagementList.children.length <= 1) { // Checks if it's empty/has placeholder
+            fetchAndDisplayMenu();
+        }
+    }
+}
     function showOrderDetails(order) {
         noOrderSelected.style.display = 'none';
         detailsContent.classList.remove('hidden');
@@ -168,7 +376,6 @@ document.addEventListener('DOMContentLoaded', () => {
         detailsContent.innerHTML = `<div class="border-b pb-4 mb-6"><h2 class="text-3xl font-bold">Order #${id}</h2><p class="text-gray-500">Status: <span class="font-semibold text-black">${status}</span></p></div><div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6"><div><h3 class="text-xl font-semibold mb-2">Customer Details</h3><p><strong>Name:</strong> ${customer.name}</p><p><strong>Phone:</strong> ${customer.phone}</p><p class="mt-2"><strong>Address:</strong><br>${customer.address}</p></div><div><h3 class="text-xl font-semibold mb-2">Order Notes</h3><p><strong>Comments:</strong> ${customer.comments || 'None'}</p><p><strong>Cutlery:</strong> ${customer.wants_cutlery ? 'Yes' : 'No'}</p></div></div><div><h3 class="text-xl font-semibold mb-2 border-t pt-4">Items Ordered</h3><ul class="space-y-2">${items.map(item => `<li class="flex justify-between items-center"><span><strong>${item.quantity}x</strong> ${item.name}</span><span class="font-semibold">PKR ${(item.price * item.quantity).toFixed(2)}</span></li>`).join('')}</ul><div class="flex justify-between font-bold text-2xl mt-4 pt-4 border-t"><span>Total:</span><span>PKR ${total_price.toFixed(2)}</span></div></div><div id="status-buttons" class="mt-8 pt-6 border-t"></div>`;
         generateStatusButtons(id, status);
     }
-
     function generateStatusButtons(orderId, currentStatus) {
         const buttonContainer = getEl('status-buttons');
         if (!buttonContainer) return;
@@ -186,7 +393,6 @@ document.addEventListener('DOMContentLoaded', () => {
             button.addEventListener('click', handleStatusUpdate);
         });
     }
-
     function handleSoundToggle() {
         soundEnabled = !soundEnabled;
         if (soundEnabled) {
@@ -201,15 +407,40 @@ document.addEventListener('DOMContentLoaded', () => {
             soundStatusText.textContent = 'Sounds Off';
         }
     }
-
     // ========= 5. EVENT LISTENERS SETUP =========
     function setupEventListeners() {
         passwordSubmit.addEventListener('click', checkPassword);
         passwordInput.addEventListener('keyup', (event) => { if (event.key === 'Enter') { checkPassword(); } });
         soundToggleButton.addEventListener('click', handleSoundToggle);
+        if (logoutBtn) {
+            logoutBtn.addEventListener('click', () => { location.reload(); });
+        }
+// --- [THE FIX] ADD THIS NEW BLOCK ---
+if (navOrdersBtn) {
+    navOrdersBtn.addEventListener('click', () => showPage('orders'));
+}
+if (navMenuBtn) {
+    navMenuBtn.addEventListener('click', () => showPage('menu'));
+}
+if (addNewItemBtn) {
+    addNewItemBtn.addEventListener('click', () => openItemModal());
+}
+if (itemForm) {
+    itemForm.addEventListener('submit', handleFormSubmit);
+}
+if (cancelItemBtn) {
+    cancelItemBtn.addEventListener('click', () => {
+        itemModal.classList.replace('flex', 'hidden');
+    });
+}
+        const filterButtons = queryAll('.filter-btn');
+        filterButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                activeFilter = button.dataset.status;
+                filterOrders();
+            });
+        });
     }
-
     // --- Let's go! ---
     setupEventListeners();
-
 });
