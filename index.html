@@ -774,39 +774,34 @@ async function fetchMenuItems() {
         firstCategoryButton.click();
     }
 }
-        // REPLACE your createMenuCardHTML function with this one
-function createMenuCardHTML(item) {
+ function createMenuCardHTML(item) {
     const priceDisplay = item.sizes ? `<span class="text-xl font-bold text-orange-500">From PKR ${Object.values(item.sizes)[0]}</span>` : `<div><span class="text-xl font-bold text-orange-500">PKR ${item.price}</span>${item.original_price ? `<span class="text-gray-500 line-through text-sm ml-2">PKR ${item.original_price}</span>` : ''}</div>`;
-    const buttonHTML = item.sizes ? `<button class="w-full bg-orange-500 text-white font-semibold py-2 px-4 mt-4 rounded-full hover:bg-orange-600 transition add-to-cart-btn">Select Size</button>` : `<button class="w-full bg-orange-500 text-white font-semibold py-2 px-4 mt-4 rounded-full hover:bg-orange-600 transition add-to-cart-btn">Add to Cart</button>`;
+    const buttonHTML = item.sizes ? `<button class="w-full bg-orange-500 text-white font-semibold py-2 px-4 rounded-full hover:bg-orange-600 transition add-to-cart-btn">Select Size</button>` : `<button class="w-full bg-orange-500 text-white font-semibold py-2 px-4 mt-4 rounded-full hover:bg-orange-600 transition add-to-cart-btn">Add to Cart</button>`;
     
-    // --- [THE FIX IS HERE] ---
     let sizeSelectorHTML = '';
     if (item.sizes) {
         const sizeChips = Object.keys(item.sizes).map(size => {
-            // Check for the "Extra Large" special case
             const chipText = (size.toLowerCase() === 'extra large') ? 'XL' : size[0];
             return `<button class="size-chip" data-size="${size}">${chipText}</button>`;
         }).join('');
-
-        sizeSelectorHTML = `
-            <div class="size-selector mt-4 px-2 py-4 bg-black rounded-lg">
-                <p class="font-bold text-center text-white mb-3">Choose a size:</p>
-                <div class="size-chip-container">${sizeChips}</div>
-                <div class="size-price-display"></div>
-                <button class="add-pizza-btn w-full bg-green-600 text-white font-semibold py-2 px-4 rounded-full hover:bg-green-700 transition opacity-50 cursor-not-allowed" disabled>
-                    Add to Cart
-                </button>
-            </div>
-        `;
+        sizeSelectorHTML = `<div class="size-selector mt-4 px-2 py-4 bg-black rounded-lg"><p class="font-bold text-center text-white mb-3">Choose a size:</p><div class="size-chip-container">${sizeChips}</div><div class="size-price-display"></div><button class="add-pizza-btn w-full bg-green-600 text-white font-semibold py-2 px-4 rounded-full hover:bg-green-700 transition opacity-50 cursor-not-allowed" disabled>Add to Cart</button></div>`;
     }
-    // --- END OF FIX ---
 
-    return `<div class="bg-white rounded-lg shadow-md p-6 menu-card" data-category="${item.category}" data-id="${item.id}" data-name="${item.name}" data-description="${item.description || ''}" data-image="${item.image_url}" ${item.sizes ? `data-sizes='${JSON.stringify(item.sizes)}'` : ''} ${item.price ? `data-price="${item.price}"` : ''}>
-                <img src="${item.image_url}" alt="${item.name}" class="w-full h-48 object-cover rounded-md mb-4" loading="lazy">
-                <div class="flex flex-col flex-grow">
+    // --- [THE DEFINITIVE FIX IS HERE] ---
+    // We create a single structure and use flexbox to push the footer down.
+    return `<div class="bg-white rounded-lg shadow-md p-6 menu-card flex flex-col" data-category="${item.category}" data-id="${item.id}" data-name="${item.name}" data-description="${item.description || ''}" data-image="${item.image_url}" ${item.sizes ? `data-sizes='${JSON.stringify(item.sizes)}'` : ''} ${item.price ? `data-price="${item.price}"` : ''}>
+                
+                <img src="${item.image_url}" alt="${item.name}" class="w-full h-56 object-cover rounded-md mb-4 flex-shrink-0">
+                
+                <!-- Main content block that will grow -->
+                <div class="flex-grow flex flex-col">
                     <h3 class="text-2xl font-semibold text-gray-800">${item.name}</h3>
-                    <p class="text-gray-600 mt-2 flex-grow">${item.description || ''}</p>
-                    <div class="mt-4">${priceDisplay}</div>
+                    <p class="text-gray-600 mt-2">${item.description || ''}</p>
+                </div>
+                
+                <!-- Footer block that is pushed to the bottom -->
+                <div class="mt-4 flex-shrink-0">
+                    <div class="mb-4">${priceDisplay}</div>
                     ${buttonHTML}
                     ${sizeSelectorHTML}
                 </div>
