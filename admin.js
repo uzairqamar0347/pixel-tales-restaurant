@@ -9,7 +9,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // ========= 2. ELEMENT SELECTORS =========
     const getEl = (id) => document.getElementById(id);
     const queryAll = (selector) => document.querySelectorAll(selector);
-    // (All selectors are defined once, cleanly)
     const passwordPrompt = getEl('password-prompt');
     const passwordInput = getEl('password-input');
     const passwordSubmit = getEl('password-submit');
@@ -41,7 +40,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // ========= 3. GLOBAL STATE =========
     let allOrders = [];
-    let allMenuItems = []; // Array to hold all menu items for editing
+    let allMenuItems = [];
     let soundEnabled = false;
     let ordersChannel = null;
     let activeFilter = 'active';
@@ -69,16 +68,12 @@ document.addEventListener('DOMContentLoaded', () => {
         await fetchInitialOrders();
         listenForNewOrders();
         updateDashboardStats();
-    }    
+    }
+    
     // --- DATA & REAL-TIME FUNCTIONS ---
     async function fetchInitialOrders() {
-        console.log("Fetching initial orders...");
         const { data, error } = await db.from('orders').select('*').order('created_at', { ascending: false });
-        if (error) {
-            console.error("Error fetching orders:", error);
-            loadingOrders.textContent = 'Could not fetch orders.';
-            return;
-        }
+        if (error) { console.error("Error fetching orders:", error); loadingOrders.textContent = 'Could not fetch orders.'; return; }
         ordersFeed.innerHTML = '';
         if (data.length === 0) {
             ordersFeed.innerHTML = '<p class="text-gray-500">No orders found yet.</p>';
@@ -89,23 +84,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 ordersFeed.appendChild(orderCard);
             });
         }
-        filterOrders(); // Apply initial filter
+        filterOrders();
     }
 
     function listenForNewOrders() {
-        console.log("Attempting to subscribe to real-time changes...");
         const allSubscriptions = db.getChannels();
-        if (allSubscriptions.length > 0) {
-            console.log(`Found and removing ${allSubscriptions.length} existing channel subscriptions.`);
-            db.removeChannel(...allSubscriptions);
-        }
+        if (allSubscriptions.length > 0) { db.removeChannel(...allSubscriptions); }
         ordersChannel = db.channel('public:orders')
             .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, (payload) => {
-                console.log('Change received!', payload);
                 if (payload.eventType === 'INSERT') {
-                    if (soundEnabled) {
-                        notificationSound.play().catch(e => console.error("Audio playback failed:", e));
-                    }
+                    if (soundEnabled) { notificationSound.play().catch(e => console.error("Audio playback failed:", e)); }
                     const newOrder = payload.new;
                     allOrders.unshift(newOrder);
                     const newOrderCard = renderOrderCard(newOrder);
@@ -134,128 +122,82 @@ document.addEventListener('DOMContentLoaded', () => {
                 filterOrders();
                 updateDashboardStats();
             })
-            .subscribe((status) => {
-                if (status === 'SUBSCRIBED') { console.log('Successfully subscribed to a NEW orders channel!'); }
-            });
+            .subscribe();
     }
-// ADD these two new functions to the DATA & REAL-TIME section
-
-async function fetchAndDisplayMenu() {
-        menuManagementList.innerHTML = '<p>Loading menu...</p>';
-        const { data, error } = await db.from('menu_items').select('*').order('category').order('name');
-        if (error) {
-            console.error("Error fetching menu for management:", error);
-            menuManagementList.innerHTML = '<p class="text-red-500">Could not load menu.</p>';
-            return;
-        }
-        
-        allMenuItems = data; // [FIX] Store the fetched menu items
-        menuManagementList.innerHTML = '';
-        
-        allMenuItems.forEach(item => {
-            const itemDiv = document.createElement('div');
-            itemDiv.className = 'flex items-center justify-between py-4';
-            const isChecked = item.is_available ? 'checked' : '';
-            itemDiv.innerHTML = `<div class="flex items-center"><img src="${item.image_url}" alt="${item.name}" class="h-12 w-12 object-cover rounded-md mr-4"><div><p class="font-bold">${item.name}</p><p class="text-sm text-gray-500">${item.category}</p></div></div><div class="flex items-center space-x-4"><label for="toggle-${item.id}" class="flex items-center cursor-pointer"><div class="relative"><input type="checkbox" id="toggle-${item.id}" class="sr-only availability-toggle" data-id="${item.id}" ${isChecked}><div class="block bg-gray-600 w-14 h-8 rounded-full"></div><div class="dot absolute left-1 top-1 bg-white w-6 h-6 rounded-full transition"></div></div></label><button data-id="${item.id}" class="edit-item-btn text-blue-500 hover:text-blue-700">Edit</button></div>`;
-            menuManagementList.appendChild(itemDiv);
-        });
-
-        document.querySelectorAll('.availability-toggle').forEach(toggle => toggle.addEventListener('change', handleAvailabilityToggle));
-        document.querySelectorAll('.edit-item-btn').forEach(button => button.addEventListener('click', (e) => openItemModal(e.currentTarget.dataset.id)));
-    }
-async function handleAvailabilityToggle(event) {
-    const toggle = event.currentTarget;
-    const itemId = toggle.dataset.id;
-    const isAvailable = toggle.checked;
-
-    toggle.disabled = true; // Prevent rapid clicking
-
-    const { error } = await db
-        .from('menu_items')
-        .update({ is_available: isAvailable })
-        .eq('id', itemId);
-
-    if (error) {
-        console.error("Error updating availability:", error);
-        alert("Could not update item availability.");
-        // Revert the toggle on error
-        toggle.checked = !isAvailable;
-    } else {
-        console.log(`Item #${itemId} availability set to ${isAvailable}`);
-        // Success!
-    }
-
-    toggle.disabled = false;
-}
-// ADD these new functions
-async function openItemModal(itemId = null) {
-        itemForm.reset();
-        itemIdInput.value = '';
-        const categorySelect = getEl('item-category');
-        const { data: categories } = await db.from('categories').select('name');
-        if (categories) {
-            categorySelect.innerHTML = categories.map(cat => `<option value="${cat.name.toLowerCase().replace(/\s+/g, '-')}">${cat.name}</option>`).join('');
-        }
-        if (itemId) {
-            modalTitle.textContent = 'Edit Menu Item';
-            // [FIX] Correctly find the item in allMenuItems
-            const itemToEdit = allMenuItems.find(item => item.id == itemId); // Use == for type flexibility
-            if (!itemToEdit) { alert("Item not found!"); return; }
-            itemIdInput.value = itemToEdit.id;
-            getEl('item-name').value = itemToEdit.name;
-            getEl('item-description').value = itemToEdit.description;
-            getEl('item-category').value = itemToEdit.category;
-            getEl('item-image-url').value = itemToEdit.image_url;
-            getEl('item-price').value = itemToEdit.price;
-            getEl('item-original-price').value = itemToEdit.original_price;
-            getEl('price-small').value = itemToEdit.price_small;
-            getEl('price-medium').value = itemToEdit.price_medium;
-            getEl('price-large').value = itemToEdit.price_large;
-            getEl('price-xl').value = itemToEdit.price_xl;
-            getEl('item-featured').checked = itemToEdit.is_featured;
-        } else {
-            modalTitle.textContent = 'Add New Item';
-        }
-        itemModal.classList.replace('hidden', 'flex');
-    }
-async function handleFormSubmit(event) {
-    event.preventDefault(); // Prevent the form from reloading the page
-    const saveButton = getEl('save-item-btn');
-    saveButton.textContent = 'Saving...';
-    saveButton.disabled = true;
+    // ADD this new function
+async function submitItemFormData() {
     const itemId = itemIdInput.value;
     const itemData = {
-        name: getEl('item-name').value,
-        description: getEl('item-description').value,
-        category: getEl('item-category').value,
-        image_url: getEl('item-image-url').value,
-        price: getEl('item-price').value || null,
-        original_price: getEl('item-original-price').value || null,
-        price_small: getEl('price-small').value || null,
-        price_medium: getEl('price-medium').value || null,
-        price_large: getEl('price-large').value || null,
-        price_xl: getEl('price-xl').value || null,
-        is_featured: getEl('item-featured').checked,
+        name: getEl('item-name').value, description: getEl('item-description').value, category: getEl('item-category').value,
+        image_url: getEl('item-image-url').value, price: getEl('item-price').value || null, original_price: getEl('item-original-price').value || null,
+        price_small: getEl('price-small').value || null, price_medium: getEl('price-medium').value || null, price_large: getEl('price-large').value || null,
+        price_xl: getEl('price-xl').value || null, is_featured: getEl('item-featured').checked,
     };
+    
     let result;
     if (itemId) {
-        // Update existing item
         result = await db.from('menu_items').update(itemData).eq('id', itemId);
     } else {
-        // Create new item
         result = await db.from('menu_items').insert([itemData]);
     }
+
     if (result.error) {
         console.error("Error saving item:", result.error);
-        alert("Failed to save item. Check the console for details.");
+        alert(`Failed to save item: ${result.error.message}`);
     } else {
         itemModal.classList.replace('flex', 'hidden');
-        await fetchAndDisplayMenu(); // Refresh the menu list
+        await fetchAndDisplayMenu();
     }
-    saveButton.textContent = 'Save Item';
-    saveButton.disabled = false;
 }
-    async function handleStatusUpdate(event) {
+    // REPLACE this function
+async function fetchAndDisplayMenu() {
+    menuManagementList.innerHTML = '<p>Loading menu...</p>';
+    const { data, error } = await db.from('menu_items').select('*').order('category').order('name');
+    if (error) {
+        menuManagementList.innerHTML = '<p class="text-red-500">Could not load menu.</p>';
+        return;
+    }
+    allMenuItems = data;
+    menuManagementList.innerHTML = '';
+    allMenuItems.forEach(item => {
+        const itemDiv = document.createElement('div');
+        itemDiv.className = 'flex items-center justify-between py-4';
+        const isChecked = item.is_available ? 'checked' : '';
+        itemDiv.innerHTML = `<div class="flex items-center"><img src="${item.image_url}" alt="${item.name}" class="h-12 w-12 object-cover rounded-md mr-4"><div><p class="font-bold">${item.name}</p><p class="text-sm text-gray-500">${item.category}</p></div></div><div class="flex items-center space-x-4"><label class="flex items-center cursor-pointer"><div class="relative"><input type="checkbox" data-id="${item.id}" class="sr-only availability-toggle" ${isChecked}><div class="block bg-gray-600 w-14 h-8 rounded-full"></div><div class="dot absolute left-1 top-1 bg-white w-6 h-6 rounded-full transition"></div></div></label><button data-id="${item.id}" class="edit-item-btn text-blue-500 hover:text-blue-700">Edit</button></div>`;
+        menuManagementList.appendChild(itemDiv);
+    });
+    // NOTE: We have removed all event listener attachments from this function.
+}
+    async function openItemModal(itemId = null) {
+    itemForm.reset();
+    itemIdInput.value = '';
+    const categorySelect = getEl('item-category');
+    const { data: categories } = await db.from('categories').select('name');
+    if (categories) {
+        categorySelect.innerHTML = categories.map(cat => `<option value="${cat.name.toLowerCase().replace(/\s+/g, '-')}">${cat.name}</option>`).join('');
+    }
+    if (itemId) {
+        modalTitle.textContent = 'Edit Menu Item';
+        const itemToEdit = allMenuItems.find(item => item.id == itemId); // [THE FIX] Removed duplicate
+        if (!itemToEdit) { alert("Item not found!"); return; }
+        itemIdInput.value = itemToEdit.id;
+        getEl('item-name').value = itemToEdit.name;
+        getEl('item-description').value = itemToEdit.description || '';
+        getEl('item-category').value = itemToEdit.category;
+        getEl('item-image-url').value = itemToEdit.image_url;
+        getEl('item-price').value = itemToEdit.price;
+        getEl('item-original-price').value = itemToEdit.original_price;
+        getEl('price-small').value = itemToEdit.price_small;
+        getEl('price-medium').value = itemToEdit.price_medium;
+        getEl('price-large').value = itemToEdit.price_large;
+        getEl('price-xl').value = itemToEdit.price_xl;
+        getEl('item-featured').checked = itemToEdit.is_featured;
+    } else {
+        modalTitle.textContent = 'Add New Item';
+    }
+    itemModal.classList.replace('hidden', 'flex');
+}    
+        async function handleStatusUpdate(event) {
         const button = event.currentTarget;
         const orderId = Number(button.dataset.id);
         const nextStatus = button.dataset.nextStatus;
@@ -276,6 +218,59 @@ async function handleFormSubmit(event) {
             }
         }
     }
+// ADD THIS FUNCTION
+async function handleAvailabilityToggle(toggle) { // Now accepts the element directly
+    const itemId = toggle.dataset.id;
+    const isAvailable = toggle.checked;
+    toggle.disabled = true;
+    const { error } = await db.from('menu_items').update({ is_available: isAvailable }).eq('id', itemId);
+    if (error) {
+        alert("Could not update item availability.");
+        toggle.checked = !isAvailable;
+    } else {
+        showToastNotification("Availability updated!", 'success');
+    }
+    toggle.disabled = false;
+}
+// ADD THIS FUNCTION
+async function handleFormSubmit(event) {
+    event.preventDefault();
+    const saveButton = getEl('save-item-btn');
+    saveButton.textContent = 'Saving...';
+    saveButton.disabled = true;
+
+    const itemId = itemIdInput.value;
+    const itemData = {
+        name: getEl('item-name').value, description: getEl('item-description').value, category: getEl('item-category').value,
+        image_url: getEl('item-image-url').value, price: getEl('item-price').value || null, original_price: getEl('item-original-price').value || null,
+        price_small: getEl('price-small').value || null, price_medium: getEl('price-medium').value || null, price_large: getEl('price-large').value || null,
+        price_xl: getEl('price-xl').value || null, is_featured: getEl('item-featured').checked,
+    };
+    
+    let result;
+    if (itemId) {
+        result = await db.from('menu_items').update(itemData).eq('id', itemId);
+    } else {
+        result = await db.from('menu_items').insert([itemData]);
+    }
+
+    if (result.error) {
+        console.error("Error saving item:", result.error);
+        // --- [THE FIX] Use the toast for errors ---
+        showToastNotification(`Failed to save: ${result.error.message}`, 'error');
+    } else {
+        itemModal.classList.replace('flex', 'hidden');
+        
+        // --- [THE FIX] Use the toast for success ---
+        const message = itemId ? "Item updated successfully!" : "New item added successfully!";
+        showToastNotification(message, 'success');
+        
+        await fetchAndDisplayMenu(); 
+    }
+
+    saveButton.textContent = 'Save Item';
+    saveButton.disabled = false;
+}
     async function updateDashboardStats() {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
@@ -293,8 +288,54 @@ async function handleFormSubmit(event) {
         statNewOrders.textContent = newOrdersCount;
         statInProgress.textContent = inProgressCount;
         statSalesToday.textContent = `PKR ${totalSales.toFixed(2)}`;
+    }async function submitItemFormData() {
+    const itemId = itemIdInput.value;
+    const itemData = { /* ... your itemData object ... */ };
+    
+    let result;
+    if (itemId) {
+        result = await db.from('menu_items').update(itemData).eq('id', itemId);
+    } else {
+        result = await db.from('menu_items').insert([itemData]);
     }
+
+    if (result.error) {
+        console.error("Error saving item:", result.error);
+        alert(`Failed to save item: ${result.error.message}`);
+    } else {
+        itemModal.classList.replace('flex', 'hidden');
+        const message = itemId ? "Item updated successfully!" : "New item added successfully!";
+        alert(message); // Use a simple alert for confirmation
+        await fetchAndDisplayMenu();
+    }
+}
     // --- UI RENDERING FUNCTIONS ---
+function showToastNotification(message, type = 'success') {
+    const div = document.createElement('div');
+    const isError = type === 'error';
+    const bgColor = isError ? 'bg-red-600' : 'bg-green-600';
+    const icon = isError 
+        ? `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>`
+        : `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>`;
+        
+    div.className = `fixed bottom-5 right-5 ${bgColor} text-white px-5 py-3 rounded-lg shadow-xl flex items-center space-x-3 opacity-0 transition-all duration-500 transform translate-y-3 z-[150]`;
+    div.innerHTML = `${icon}<span>${message}</span>`;
+    
+    document.body.appendChild(div);
+    
+    // Animate in
+    setTimeout(() => { 
+        div.style.opacity = '1'; 
+        div.style.transform = 'translateY(0)'; 
+    }, 10);
+    
+    // Animate out and remove
+    setTimeout(() => { 
+        div.style.opacity = '0'; 
+        div.style.transform = 'translateY(3px)'; 
+        setTimeout(() => div.remove(), 500); 
+    }, 3000);
+}
     function renderOrderCard(order) {
         const orderDate = new Date(order.created_at);
         const time = orderDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -314,7 +355,7 @@ async function handleFormSubmit(event) {
     }
     // REPLACE this function
 function filterOrders() {
-    const orderCards = queryAll('.order-card');
+        const orderCards = document.querySelectorAll('.order-card');
     orderCards.forEach(card => {
         const orderId = Number(card.dataset.orderId);
         const order = allOrders.find(o => o.id === orderId);
@@ -337,7 +378,7 @@ function filterOrders() {
         }
     });
     // Update the visual state of the filter buttons
-    const filterButtons = queryAll('.filter-btn');
+        const filterButtons = document.querySelectorAll('.filter-btn');
     filterButtons.forEach(button => {
         if (button.dataset.status === activeFilter) {
             button.classList.remove('bg-gray-200', 'text-gray-700');
@@ -407,40 +448,41 @@ function showPage(pageName) {
             soundStatusText.textContent = 'Sounds Off';
         }
     }
-    // ========= 5. EVENT LISTENERS SETUP =========
+     // ========= 5. EVENT LISTENERS SETUP =========
     function setupEventListeners() {
-        passwordSubmit.addEventListener('click', checkPassword);
-        passwordInput.addEventListener('keyup', (event) => { if (event.key === 'Enter') { checkPassword(); } });
-        soundToggleButton.addEventListener('click', handleSoundToggle);
-        if (logoutBtn) {
-            logoutBtn.addEventListener('click', () => { location.reload(); });
+    // --- Static Page Listeners (Setup once) ---
+    passwordSubmit.addEventListener('click', checkPassword);
+    passwordInput.addEventListener('keyup', (event) => { if (event.key === 'Enter') { checkPassword(); } });
+    soundToggleButton.addEventListener('click', handleSoundToggle);
+    if (logoutBtn) { logoutBtn.addEventListener('click', () => { location.reload(); }); }
+    const filterButtons = queryAll('.filter-btn');
+    filterButtons.forEach(button => button.addEventListener('click', () => { activeFilter = button.dataset.status; filterOrders(); }));
+    if (navOrdersBtn) navOrdersBtn.addEventListener('click', () => showPage('orders'));
+    if (navMenuBtn) navMenuBtn.addEventListener('click', () => showPage('menu'));
+    if (addNewItemBtn) addNewItemBtn.addEventListener('click', () => openItemModal());
+    if (itemForm) itemForm.addEventListener('submit', handleFormSubmit);
+    if (cancelItemBtn) cancelItemBtn.addEventListener('click', () => itemModal.classList.replace('flex', 'hidden'));
+
+    // --- [THE FIX: EVENT DELEGATION FOR THE DYNAMIC LIST] ---
+    // Add ONE smart listener to the parent container.
+    menuManagementList.addEventListener('click', (event) => {
+        // Check if an "Edit" button was the target of the click
+        const editButton = event.target.closest('.edit-item-btn');
+        if (editButton) {
+            const itemId = editButton.dataset.id;
+            openItemModal(itemId);
         }
-// --- [THE FIX] ADD THIS NEW BLOCK ---
-if (navOrdersBtn) {
-    navOrdersBtn.addEventListener('click', () => showPage('orders'));
-}
-if (navMenuBtn) {
-    navMenuBtn.addEventListener('click', () => showPage('menu'));
-}
-if (addNewItemBtn) {
-    addNewItemBtn.addEventListener('click', () => openItemModal());
-}
-if (itemForm) {
-    itemForm.addEventListener('submit', handleFormSubmit);
-}
-if (cancelItemBtn) {
-    cancelItemBtn.addEventListener('click', () => {
-        itemModal.classList.replace('flex', 'hidden');
+    });
+
+    menuManagementList.addEventListener('change', (event) => {
+        // Check if an "Availability Toggle" was the target of the change
+        const availabilityToggle = event.target.closest('.availability-toggle');
+        if (availabilityToggle) {
+            // We pass the actual element to the handler
+            handleAvailabilityToggle(availabilityToggle);
+        }
     });
 }
-        const filterButtons = queryAll('.filter-btn');
-        filterButtons.forEach(button => {
-            button.addEventListener('click', () => {
-                activeFilter = button.dataset.status;
-                filterOrders();
-            });
-        });
-    }
     // --- Let's go! ---
     setupEventListeners();
 });
