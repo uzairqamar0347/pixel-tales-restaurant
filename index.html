@@ -339,6 +339,39 @@
     color: #c2410c; /* dark orange text */
     font-weight: 700;
 }
+#quick-view-modal img {
+    width: 100%;
+    height: auto; /* Maintain aspect ratio */
+    max-height: 400px; /* Safety net for very tall images on desktop */
+    margin: auto; /* Center the image vertically if content is taller */
+    object-fit: contain; /* Ensure the whole image is visible without stretching */
+}
+
+/* --- Mobile Responsive Overrides --- */
+@media (max-width: 767px) { 
+    #quick-view-modal .modal-content {
+        display: flex;
+        flex-direction: column;
+        height: 90vh; 
+        max-height: 90vh;
+        grid-template-columns: 1fr; /* This might not be needed with flex, but safe to keep */
+    }
+
+    /* Override the image height specifically for mobile */
+    #quick-view-modal img {
+        max-height: 200px;
+        flex-shrink: 0; /* Prevent image from shrinking on flex layouts */
+    }
+
+    #quick-view-modal .flex.flex-col {
+        overflow-y: auto;
+        min-height: 0; 
+    }
+
+    #quick-view-modal #close-quick-view {
+        display: none;
+    }
+}
     </style>
 </head>
 <body class="antialiased"  >
@@ -597,6 +630,7 @@ const stickyCartTotal = getEl('sticky-cart-total');
         const closeQuickViewBtn = getEl('close-quick-view');
         const quickViewOptions = getEl('quick-view-options');
 const recentOrdersContainer = getEl('recent-orders-container');
+const mobileCloseQuickViewBtn = getEl('mobile-close-quick-view');
 const congratsModal = getEl('congrats-modal');
 const closeCongratsBtn = getEl('close-congrats-btn');
 const congratsDeliveryTime = getEl('congrats-delivery-time');
@@ -977,6 +1011,11 @@ async function saveReceiptAsImage() {
         quickViewModal.addEventListener('click', (e) => { if (e.target.id === 'quick-view-modal') quickViewModal.style.display = 'none'; });
         closeQuickViewBtn.addEventListener('click', () => { quickViewModal.style.display = 'none'; });
         quickViewOptions.addEventListener('click', handleQuickViewAddToCart);
+        if (mobileCloseQuickViewBtn) {
+        mobileCloseQuickViewBtn.addEventListener('click', () => {
+            quickViewModal.style.display = 'none';
+        });
+    }
     }
     
     // New Listeners for the Two-Step Flow
@@ -1440,6 +1479,9 @@ function handleQuickViewAddToCart(e) {
             <h3 id="quick-view-title" class="text-3xl font-bold mb-2"></h3>
             <p id="quick-view-description" class="text-gray-600 mb-4 flex-grow"></p>
             <div id="quick-view-options">
+            </div>
+            <div class="mt-6 text-center md:hidden">
+                <button id="mobile-close-quick-view" class="w-full bg-red-600 text-white font-semibold py-3 px-6 rounded-full hover:bg-red-500 transition">Close</button>
             </div>
         </div>
     </div>
