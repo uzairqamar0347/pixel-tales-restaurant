@@ -339,38 +339,120 @@
     color: #c2410c; /* dark orange text */
     font-weight: 700;
 }
-#quick-view-modal img {
-    width: 100%;
-    height: auto; /* Maintain aspect ratio */
-    max-height: 400px; /* Safety net for very tall images on desktop */
-    margin: auto; /* Center the image vertically if content is taller */
-    object-fit: contain; /* Ensure the whole image is visible without stretching */
+.quantity-btn-outline {
+    background-color: transparent; border: 2px solid #e5e7eb; border-radius: 0.5rem;
+    width: 3rem; height: 3rem; font-weight: 600; color: #6b7280;
+    transition: all 0.2s ease-in-out;
+}
+.quantity-btn-outline:hover { background-color: #f9fafb; border-color: #f97316; color: #f97316; }
+
+/* Contained Card Accordion Styling (for add-ons) */
+.addon-accordion-card { background-color: #f3f4f6; border-radius: 0.75rem; overflow: hidden; transition: all 0.3s ease-in-out; }
+.addon-accordion-card .addon-header { display: flex; justify-content: space-between; align-items: center; padding: 1rem; cursor: pointer; font-weight: 600; }
+.addon-accordion-card .addon-header .optional-text { font-size: 0.875rem; font-weight: 400; color: #6b7280; }
+.addon-accordion-card .addon-header .arrow-icon { transition: transform 0.3s ease-in-out; }
+.addon-accordion-card .addon-content { max-height: 0; overflow: hidden; transition: max-height 0.3s ease-in-out; }
+.addon-accordion-card.open { background-color: #ffffff; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); }
+.addon-accordion-card.open .addon-header { border-bottom: 1px solid #e5e7eb; }
+.addon-accordion-card.open .arrow-icon { transform: rotate(180deg); }
+.addon-accordion-card.open .addon-content { max-height: 500px; padding: 0 1rem 1rem 1rem; }
+.addon-accordion {
+    border-radius: 0.75rem;
+    overflow: hidden;
+    border: 1px solid #e5e7eb;
 }
 
-/* --- Mobile Responsive Overrides --- */
-@media (max-width: 767px) { 
-    #quick-view-modal .modal-content {
-        display: flex;
-        flex-direction: column;
-        height: 90vh; 
-        max-height: 90vh;
-        grid-template-columns: 1fr; /* This might not be needed with flex, but safe to keep */
-    }
+.addon-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    background-color: #e53e3e; /* red-400 */
+    color: white;
+    cursor: pointer;
+    font-weight: 600;
+}
 
-    /* Override the image height specifically for mobile */
-    #quick-view-modal img {
-        max-height: 200px;
-        flex-shrink: 0; /* Prevent image from shrinking on flex layouts */
-    }
+.addon-header .optional-text {
+    font-size: 0.875rem;
+    font-weight: 400;
+    opacity: 0.8;
+}
 
-    #quick-view-modal .flex.flex-col {
-        overflow-y: auto;
-        min-height: 0; 
-    }
+.addon-header .arrow-icon {
+    transition: transform 0.3s ease-in-out;
+}
 
-    #quick-view-modal #close-quick-view {
-        display: none;
-    }
+.addon-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease-in-out, padding 0.3s ease-in-out;
+    padding: 0 1rem;
+    background-color: #f9fafb; /* gray-50 */
+}
+
+/* State when the accordion is open */
+.addon-accordion.open .addon-header {
+    background-color: #ef4444; /* red-500 */
+}
+
+.addon-accordion.open .arrow-icon {
+    transform: rotate(180deg);
+}
+
+.addon-accordion.open .addon-content {
+    max-height: 500px; /* A large value to allow content to expand */
+    padding: 1rem;
+}
+.addon-accordion-card {
+    background-color: #f3f4f6; /* light gray background */
+    border-radius: 0.75rem; /* 12px */
+    overflow: hidden;
+    transition: all 0.3s ease-in-out;
+}
+
+.addon-accordion-card .addon-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    cursor: pointer;
+        font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.addon-accordion-card .addon-header .optional-text {
+    font-size: 0.7rem;
+    font-weight: 400;
+    color: #FFFFFF; /* medium gray */
+}
+
+.addon-accordion-card .addon-header .arrow-icon {
+    transition: transform 0.3s ease-in-out;
+}
+
+.addon-accordion-card .addon-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease-in-out;
+}
+
+.addon-accordion-card.open {
+    background-color: #ffffff;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.addon-accordion-card.open .addon-header {
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.addon-accordion-card.open .arrow-icon {
+    transform: rotate(180deg);
+}
+
+.addon-accordion-card.open .addon-content {
+    max-height: 500px;
+    padding: 0 1rem 1rem 1rem;
 }
     </style>
 </head>
@@ -628,12 +710,25 @@ const mobileCloseQuickViewBtn = getEl('mobile-close-quick-view');
 const congratsModal = getEl('congrats-modal');
 const closeCongratsBtn = getEl('close-congrats-btn');
 const congratsDeliveryTime = getEl('congrats-delivery-time');
+const addonModal = getEl('addon-modal');
+const closeAddonModalBtn = getEl('close-addon-modal');
+const addonModalTitle = getEl('addon-modal-title');
+const addonOptionsContainer = getEl('addon-options-container');
+const addonNoThanksBtn = getEl('addon-no-thanks-btn');
+const addonAddToCartBtn = getEl('addon-add-to-cart-btn');
+const addonTotalPrice = getEl('addon-total-price');
+const qvDecreaseQtyBtn = getEl('qv-decrease-qty');
+const qvIncreaseQtyBtn = getEl('qv-increase-qty');
+const qvQuantitySpan = getEl('qv-quantity');
+const qvAddToCartBtn = getEl('qv-add-to-cart-btn');
         // ========= 4. GLOBAL STATE VARIABLES =========
         let cart = [];
-        let allMenuItems = [];
-        let currentCategory = 'deals';
-        let lastSuccessfulOrderForReceipt = null; 
-        
+let allMenuItemsData = []; // To hold the raw data
+let allMenuItemElements = []; // To hold the HTML elements
+let currentCategory = '';
+let lastSuccessfulOrderForReceipt = null;
+let isSubmitting = false;       
+let pizzaOrderInProgress = null;
         // ========= 5. CORE FUNCTIONS =========
 
         async function initApp() {
@@ -651,24 +746,13 @@ async function buildHeroSlider() {
     if (!slidesContainer) return;
 
     try {
-        // Fetch only the items where 'is_featured' is true
-        const { data, error } = await db
-            .from('menu_items')
-            .select('*')
-            .eq('is_featured', true) // The magic filter
-            .limit(3); // Get a maximum of 3 featured items
-
+        const { data, error } = await db.from('menu_items').select('*').eq('is_featured', true).limit(3);
         if (error) throw error;
         if (!data || data.length === 0) {
-            // If no featured items, hide the slider
             getEl('hero-slider').style.display = 'none';
             return;
         }
-
-        // Clear any hard-coded slides
         slidesContainer.innerHTML = '';
-
-        // Build a new slide for each featured item
         data.forEach(item => {
             const slideHTML = `
                 <div class="w-full h-full flex-shrink-0 relative">
@@ -677,7 +761,7 @@ async function buildHeroSlider() {
                     <div class="absolute inset-0 flex flex-col justify-center items-center text-center text-white p-4">
                         <h2 class="text-4xl md:text-6xl font-bold mb-4">${item.name}</h2>
                         <p class="text-lg md:text-xl max-w-2xl mb-8">${item.description || ''}</p>
-                        <button data-order-id="${item.id}" class="hero-order-btn bg-orange-500 text-white font-semibold py-3 px-8 rounded-full shadow-lg hover:bg-orange-600 transition duration-300 pulse-btn">
+                        <button data-order-id="${item.id}" class="hero-order-btn bg-orange-500 text-white font-semibold py-3 px-8 rounded-full shadow-lg hover:bg-orange-600 transition pulse-btn">
                             Order Now
                         </button>
                     </div>
@@ -685,10 +769,12 @@ async function buildHeroSlider() {
             `;
             slidesContainer.insertAdjacentHTML('beforeend', slideHTML);
         });
-
+        const allHeroButtons = queryAll('.hero-order-btn');
+        allHeroButtons.forEach(button => {
+            button.addEventListener('click', handleHeroOrderClick);
+        });
     } catch (error) {
         console.error('Error building hero slider:', error.message);
-        // Hide the slider on error to prevent a broken display
         getEl('hero-slider').style.display = 'none';
     }
 }
@@ -729,27 +815,22 @@ async function buildCategoryButtons() {
     categoryBtns = queryAll('.category-btn');
     categoryBtns.forEach(button => button.addEventListener('click', handleCategoryClick));
 }
-
-/**
- * [MODIFIED] This is the old fetchAndRenderMenu, now simplified and renamed.
- */
-// REPLACE your fetchMenuItems function with this one
 async function fetchMenuItems() {
-    // [THE FIX] We've added .eq('is_available', true) to the query
-    const { data, error } = await db
-        .from('menu_items')
-        .select('*')
-        .eq('is_available', true); // Only fetch items that are marked as available
-
+    const { data, error } = await db.from('menu_items').select('*').eq('is_available', true);
     if (error) {
         noResultsMessage.textContent = 'Could not load menu items.';
         noResultsMessage.classList.remove('hidden');
         throw error;
     }
     
+    // 1. Store the raw data from Supabase
+    allMenuItemsData = data;
+    
     menuItemsContainer.innerHTML = '';
-    data.forEach(item => {
-        // ... (the rest of the function remains exactly the same) ...
+    
+    // 2. Loop through the raw data to build the HTML
+    allMenuItemsData.forEach(item => {
+        // Add the 'sizes' property to the data object if needed
         if (item.price_small || item.price_medium || item.price_large || item.price_xl) {
             item.sizes = {};
             if (item.price_small) item.sizes['Small'] = item.price_small;
@@ -761,11 +842,13 @@ async function fetchMenuItems() {
         menuItemsContainer.insertAdjacentHTML('beforeend', cardHTML);
     });
 
-    allMenuItems = Array.from(queryAll('.menu-card'));
+    // 3. AFTER building the HTML, get all the card elements for filtering
+    allMenuItemElements = Array.from(queryAll('.menu-card'));
+    
     const firstCategoryButton = document.querySelector('.category-btn');
     if (firstCategoryButton) {
         currentCategory = firstCategoryButton.dataset.category;
-        firstCategoryButton.click();
+        firstCategoryButton.click(); // This will trigger updateMenuDisplay
     }
 }
         // REPLACE your createMenuCardHTML function with this one
@@ -835,20 +918,16 @@ function handleShowReceipt() {
     receiptContainer.classList.remove('hidden');
     cartModal.style.display = 'none';
 }
-// REPLACE this entire function
 async function handleConfirmOrder() {
     const orderButton = getEl('confirm-order-btn');
     if (!orderButton || !lastSuccessfulOrderForReceipt) return;
 
-    // --- Save the original state BEFORE disabling ---
     const originalButtonText = orderButton.innerHTML;
     orderButton.innerHTML = 'Placing Order...';
     orderButton.disabled = true;
 
-    // --- Submit the order ---
     const { success, error } = await submitOrderToSupabase(lastSuccessfulOrderForReceipt);
 
-    // --- Handle the result ---
     if (success) {
         triggerConfetti();
         receiptContainer.classList.add('hidden'); 
@@ -859,9 +938,6 @@ async function handleConfirmOrder() {
     } else {
         showToastNotification(`Order failed: ${error.message}`, 'error');
     }
-
-    // --- [THE FIX] This now runs AFTER both success and failure ---
-    // Always restore the button for the next time the modal is opened.
     orderButton.innerHTML = originalButtonText;
     orderButton.disabled = false;
 }
@@ -881,13 +957,11 @@ async function submitOrderToSupabase(orderDetails) {
         return { success: false, error: error };
     }
 }
-// REPLACE with this cleaner version
 function generateReceiptContent() {
     if (!lastSuccessfulOrderForReceipt) return '<p>No order details found.</p>';
 
     const { cart: orderCart, total, address, comments, name, phone, wants_cutlery } = lastSuccessfulOrderForReceipt;
     
-    // This function now only has to build the core order details
     let receiptHTML = '';
     
     if (name) receiptHTML += `<p class="mb-2"><b>Name:</b> ${name}</p>`;
@@ -917,18 +991,15 @@ function generateReceiptContent() {
 
     return receiptHTML;
 }
-        // REPLACE this whole function
 async function saveReceiptAsImage() {
     if (!lastSuccessfulOrderForReceipt) {
         showToastNotification("No order details to save.", 'error');
         return;
     }
 
-    // 1. Create a temporary container div and add it to the body
     const printContainer = document.createElement('div');
     printContainer.id = 'receipt-print-container';
     
-    // 2. Generate the full, clean HTML for the receipt
     const { cart: orderCart, total, address, comments, name, phone, wants_cutlery } = lastSuccessfulOrderForReceipt;
     let receiptHTML = `
         <div style="text-align: center; margin-bottom: 2rem;">
@@ -966,16 +1037,13 @@ async function saveReceiptAsImage() {
     if (comments) receiptHTML += `<p style="margin-top: 1.5rem; font-size: 0.875rem; color: #4b5563;"><b>Comments:</b> ${comments}</p>`;
     if (wants_cutlery) receiptHTML += `<p style="font-size: 0.875rem; color: #4b5563;"><b>Cutlery Included</b></p>`;
     
-    // 3. Put the clean HTML into our off-screen container
     printContainer.innerHTML = receiptHTML;
     document.body.appendChild(printContainer);
-
-    // 4. Use html2canvas to capture the PERFECT, off-screen div
     try {
         const canvas = await html2canvas(printContainer, { 
             scale: 2, // Higher resolution
             logging: false,
-            useCORS: true // Important for external images if any
+            useCORS: true 
         });
         const link = document.createElement('a');
         link.href = canvas.toDataURL('image/png');
@@ -985,7 +1053,6 @@ async function saveReceiptAsImage() {
         console.error("Error generating receipt image:", err);
         showToastNotification("Could not save receipt image.", 'error');
     } finally {
-        // 5. IMPORTANT: Clean up and remove the temporary div
         document.body.removeChild(printContainer);
     }
 }
@@ -995,27 +1062,27 @@ async function saveReceiptAsImage() {
     searchBar.addEventListener('input', updateMenuDisplay);
     sortSelect.addEventListener('change', updateMenuDisplay);
     menuItemsContainer.addEventListener('click', handleMenuInteraction);
-    const dynamicHeroOrderButtons = queryAll('.hero-order-btn');
-    dynamicHeroOrderButtons.forEach(b => b.addEventListener('click', handleHeroOrderClick));
-
+   
     cartButton.addEventListener('click', () => { cartModal.style.display = 'flex'; });
     closeModalBtn.addEventListener('click', () => { cartModal.style.display = 'none'; });
     window.addEventListener('click', (e) => { if (e.target === cartModal) cartModal.style.display = 'none'; });
     clearCartBtn.addEventListener('click', () => { cart = []; updateCartUI(); });
     cartItemsContainer.addEventListener('click', handleCartQuantityChange);
-
-    if (quickViewModal) {
-        quickViewModal.addEventListener('click', (e) => { if (e.target.id === 'quick-view-modal') quickViewModal.style.display = 'none'; });
-        closeQuickViewBtn.addEventListener('click', () => { quickViewModal.style.display = 'none'; });
-        quickViewOptions.addEventListener('click', handleQuickViewAddToCart);
-        if (mobileCloseQuickViewBtn) {
-        mobileCloseQuickViewBtn.addEventListener('click', () => {
-            quickViewModal.style.display = 'none';
-        });
-    }
+if (quickViewModal) {
+        quickViewModal.addEventListener('click', handleQuickViewInteraction);
+    const closeModal = () => { quickViewModal.style.display = 'none'; };
+    closeQuickViewBtn.addEventListener('click', closeModal);
+    if (mobileCloseQuickViewBtn) {
+        mobileCloseQuickViewBtn.addEventListener('click', closeModal);
     }
     
-    // New Listeners for the Two-Step Flow
+    // Close by clicking the dark overlay background
+    quickViewModal.addEventListener('click', (e) => { 
+        if (e.target.id === 'quick-view-modal') {
+            closeModal();
+        }
+    });
+}
     if (showReceiptBtn) showReceiptBtn.addEventListener('click', handleShowReceipt);
     if (confirmOrderBtn) confirmOrderBtn.addEventListener('click', handleConfirmOrder);
     if (cancelOrderBtn) {
@@ -1032,6 +1099,17 @@ async function saveReceiptAsImage() {
         window.addEventListener('scroll', handleScroll);
         stickyCartBtn.addEventListener('click', () => { cartButton.click(); });
     }
+}
+if (addonModal) {
+    // This single handler manages all interactions inside the modal
+    addonModal.addEventListener('click', handleAddonInteraction);
+
+    // This handles closing the modal
+    const closeAddon = () => { addonModal.style.display = 'none'; };
+    closeAddonModalBtn.addEventListener('click', closeAddon);
+    addonModal.addEventListener('click', (e) => {
+        if (e.target.id === 'addon-modal') { closeAddon(); }
+    });
 }
 if (congratsModal) {
     closeCongratsBtn.addEventListener('click', closeCongratsModal);
@@ -1097,20 +1175,29 @@ function handleMenuInteraction(e) {
     }
     openQuickView(card.dataset.id);
 }
-        function handleHeroOrderClick(e) {
-            const itemCard = allMenuItems.find(card => card.dataset.id === e.currentTarget.dataset.orderId);
-            if (itemCard) {
-                const data = itemCard.dataset;
-                if (data.sizes) {
-                    const sizes = JSON.parse(data.sizes);
-                    const defaultSize = Object.keys(sizes)[0];
-                    addToCart(`${data.name} - ${defaultSize}`, sizes[defaultSize], `${data.id}-${defaultSize.toLowerCase()}`);
-                } else {
-                    addToCart(data.name, parseFloat(data.price), data.id);
-                }
-                cartButton.click();
-            }
-        } 
+    function handleHeroOrderClick(e) {
+    const itemId = e.currentTarget.dataset.orderId;
+    const itemData = allMenuItemsData.find(item => item.id == itemId);
+
+    if (itemData) {
+        if (itemData.sizes) {
+            const sizes = itemData.sizes;
+            const defaultSize = Object.keys(sizes)[0];
+            const price = sizes[defaultSize];
+            const finalName = `${itemData.name} - ${defaultSize}`;
+            // [THE FIX] Ensure the ID is always a string from the start
+            const finalId = `${itemData.id}-${defaultSize.toLowerCase()}`;
+            addToCart(finalName, price, finalId);
+        } else {
+            // [THE FIX] Ensure the ID is always a string
+            addToCart(itemData.name, parseFloat(itemData.price), String(itemData.id));
+        }
+        cartButton.click();
+    } else {
+        console.error(`Could not find item with ID "${itemId}" in the hero slider.`);
+        window.location.href = '#menu';
+    }
+}
         // ========= 8. HELPER FUNCTIONS =========
 function triggerConfetti() {
     const confettiCount = 200;
@@ -1132,12 +1219,8 @@ function triggerConfetti() {
         }, 4000);
     }
 }
-// REPLACE this function
-// REPLACE this function
 function showCongratsModal() {
     if (!congratsModal) return;
-
-    // Set the delivery time text
     const congratsDeliveryTime = getEl('congrats-delivery-time');
     if (congratsDeliveryTime) {
         congratsDeliveryTime.innerHTML = 'Estimated Delivery: <strong>30-45 minutes</strong>';
@@ -1226,16 +1309,16 @@ function handleOrderAgain(e) {
 
         const saveCart = () => sessionStorage.setItem('restaurantCart', JSON.stringify(cart));
         const loadCart = () => { const storedCart = sessionStorage.getItem('restaurantCart'); if (storedCart) cart = JSON.parse(storedCart); };
-        function addToCart(name, price, id, clickedButton = null) { 
+function addToCart(name, price, id, clickedButton = null, quantity = 1) { 
     const existingItem = cart.find(item => item.id === id); 
     if (existingItem) { 
-        existingItem.quantity++; 
+        existingItem.quantity += quantity; // Add the new quantity
     } else { 
-        cart.push({ id, name, price, quantity: 1 }); 
+        cart.push({ id, name, price, quantity: quantity }); // Start with the new quantity
     } 
     
     updateCartUI(); 
-    showToastNotification(`${name} added to cart!`); 
+    showToastNotification(`${quantity}x ${name} added to cart!`);  
     if (clickedButton) {
         const originalText = clickedButton.innerHTML;
                 clickedButton.classList.add('btn-success');
@@ -1302,20 +1385,31 @@ function updateCartUI() {
     saveCart(); 
 }
         function handleCartQuantityChange(e) {
-            if (e.target.matches('.increase-quantity-btn, .decrease-quantity-btn')) { 
-                const id = e.target.dataset.id; 
-                const itemIndex = cart.findIndex(i => i.id === id); 
-                if (itemIndex === -1) return; 
-                if (e.target.matches('.increase-quantity-btn')) { 
-                    cart[itemIndex].quantity++; 
-                } else { 
-                    cart[itemIndex].quantity--; 
-                    if (cart[itemIndex].quantity <= 0) cart.splice(itemIndex, 1); 
-                } 
-                updateCartUI(); 
-            } 
-        }
+    if (e.target.matches('.decrease-quantity-btn, .increase-quantity-btn')) {
+        const idFromButton = e.target.dataset.id;
         
+        // --- [THE FIX IS HERE] ---
+        // Use a loose equality check (==) to match strings and numbers (e.g., "2" == 2)
+        // For combos, we still need a strict check. Let's find the item by its 'id' property.
+        const itemIndex = cart.findIndex(item => item.id == idFromButton);
+        // --- End of Fix ---
+
+        if (itemIndex === -1) {
+            console.error("Could not find item in cart with ID:", idFromButton);
+            return;
+        }
+
+        if (e.target.matches('.increase-quantity-btn')) {
+            cart[itemIndex].quantity++;
+        } else {
+            cart[itemIndex].quantity--;
+            if (cart[itemIndex].quantity <= 0) {
+                cart.splice(itemIndex, 1);
+            }
+        }
+        updateCartUI();
+    }
+}        
 function showToastNotification(message, type = 'success') { 
     const div = document.createElement('div'); 
     
@@ -1341,103 +1435,394 @@ function showToastNotification(message, type = 'success') {
         setTimeout(() => div.remove(), 500); 
     }, 3000); 
 }
-function openQuickView(itemId) {
-    const card = allMenuItems.find(c => c.dataset.id === itemId);
-    if (!card) return;
-    const item = card.dataset;
+async function openQuickView(itemId) {
+    const item = allMenuItemsData.find(i => i.id == itemId);
+    if (!item) return;
+
+    // --- Get references to all the modal parts ---
+    const regularImageContainer = getEl('qv-regular-image-container');
+    const pizzaImageHeader = getEl('qv-pizza-image-header');
+    const pizzaImage = getEl('qv-pizza-image');
+    const mainQuantityControls = getEl('qv-main-quantity-controls');
+    const modalTitle = getEl('quick-view-title');
+    const modalDescription = getEl('quick-view-description');
+
+    // --- Setup based on item type (Pizza vs. Regular) ---
+    if (item.sizes) {
+        // PIZZA FLOW
+        regularImageContainer.style.display = 'none';
+        mainQuantityControls.style.display = 'none'; // Hide main quantity, as price is size-dependent
+        pizzaImageHeader.classList.remove('hidden');
+        pizzaImage.src = item.image_url;
+        modalTitle.textContent = `Customize Your ${item.name}`;
+        modalDescription.textContent = item.description;
+    } else {
+        // REGULAR ITEM FLOW
+        regularImageContainer.style.display = 'block';
+        mainQuantityControls.style.display = 'flex';
+        getEl('quick-view-image').src = item.image_url;
+        pizzaImageHeader.classList.add('hidden');
+        modalTitle.textContent = item.name;
+        modalDescription.textContent = item.description;
+    }
     
-    getEl('quick-view-image').src = item.image;
+    // --- Universal setup steps ---
+    const modalContent = quickViewModal.querySelector('.modal-content');
+    modalContent.dataset.itemId = item.id;
+    modalContent.dataset.basePrice = item.price || 0;
+    modalContent.dataset.itemName = item.name;
+    
+    const optionsContainer = getEl('quick-view-options');
+    optionsContainer.innerHTML = '';
+    getEl('qv-quantity').textContent = '1';
+
+    // --- Fetch all possible add-ons ---
+    const { data: allAddons } = await db.from('add_ons').select('*');
+    if (!allAddons) { 
+        optionsContainer.innerHTML = '<p class="text-red-500">Could not load options.</p>';
+        return; 
+    }
+    
+    // --- Build the dynamic UI sections ---
+    if (item.sizes) {
+        buildSizeSelectorUI(item.sizes, item.id);
+    }
+
+    // --- [THE FIX IS HERE] ADD THE ADD-ON LOGIC BACK ---
+    const addonCategories = item.addon_categories || [];
+    
+    if (addonCategories.includes('drinks')) {
+        const drinkOptions = allAddons.filter(addon => addon.category === 'drinks');
+        buildAddonAccordionUI('drinks', 'Complete With a Drink', drinkOptions);
+    }
+    if (addonCategories.includes('fries')) {
+        const friesOptions = allAddons.filter(addon => addon.category === 'fries');
+        buildAddonAccordionUI('fries', "Don't forget the Fries!", friesOptions);
+    }
+    if (addonCategories.includes('dips')) {
+        const dipOptions = allAddons.filter(addon => addon.category === 'dips');
+        buildAddonAccordionUI('dips', 'Add Some Dips', dipOptions, true);
+    }
+    // --- End of Fix ---
+    
+    // --- Final setup ---
+    updateQuickViewPrice();
+    quickViewModal.style.display = 'flex';
+}
+async function openRegularItemModal(item) {
+    getEl('quick-view-image').src = item.image_url;
     getEl('quick-view-title').textContent = item.name;
     getEl('quick-view-description').textContent = item.description;
 
-    const optionsContainer = getEl('quick-view-options');
-    optionsContainer.innerHTML = ''; // Clear previous options
+    const modalContent = quickViewModal.querySelector('.modal-content');
+    modalContent.dataset.itemId = item.id;
+    modalContent.dataset.basePrice = item.price || 0;
+    modalContent.dataset.itemName = item.name;
     
-    const sizes = item.sizes ? JSON.parse(item.sizes) : null;
+    const optionsContainer = getEl('quick-view-options');
+    optionsContainer.innerHTML = '';
+    getEl('qv-quantity').textContent = '1';
+    
+    // Un-hide the footer for regular items
+    const footer = quickViewModal.querySelector('.border-t');
+    if (footer) footer.style.display = 'block';
 
-    if (sizes) {
-        let buttonsHTML = `<p class="font-bold text-lg mb-3">Choose a size:</p>`;
-        buttonsHTML += `<div class="size-radio-group">`;
-        
-        Object.entries(sizes).forEach(([size, price], index) => {
-            const uniqueId = `size-${item.id}-${index}`; 
-            buttonsHTML += `
-                <div>
-                    <input type="radio" id="${uniqueId}" name="pizza-size-${item.id}" value="${size}" data-price="${price}">
-                    <label for="${uniqueId}">
-                        <span class="font-semibold">${size}</span>
-                        <span class="text-gray-400 mx-2 flex-grow border-b border-dotted border-gray-400"></span>
-                        <span>PKR ${price.toFixed(2)}</span>
-                    </label>
-                </div>
-            `;
-        });
-        buttonsHTML += `</div>`;
-        buttonsHTML += `<button id="quick-view-add-btn" class="w-full bg-orange-500 text-white font-semibold py-3 px-6 mt-6 rounded-full hover:bg-orange-600 transition opacity-50 cursor-not-allowed" disabled>Add to Cart</button>`;
-        // --- END OF FIX ---
-        
-        optionsContainer.innerHTML = buttonsHTML;
-
-    } else {
-        optionsContainer.innerHTML = `<button class="w-full bg-orange-500 text-white font-semibold py-3 px-6 mt-4 rounded-full hover:bg-orange-600 transition" data-name="${item.name}" data-price="${item.price}" data-id="${item.id}">Add to Cart - PKR ${item.price}</button>`;
+    const { data: allAddons } = await db.from('add_ons').select('*');
+    if (!allAddons) { return; }
+    
+    const addonCategories = item.addon_categories || [];
+    if (addonCategories.includes('drinks')) {
+        const drinkOptions = allAddons.filter(addon => addon.category === 'drinks');
+        buildAddonAccordionUI('drinks', 'Complete With a Drink', drinkOptions);
     }
-
+    if (addonCategories.includes('fries')) {
+        const friesOptions = allAddons.filter(addon => addon.category === 'fries');
+        buildAddonAccordionUI('fries', "Don't forget the Fries!", friesOptions);
+    }
+    if (addonCategories.includes('dips')) {
+        const dipOptions = allAddons.filter(addon => addon.category === 'dips');
+        buildAddonAccordionUI('dips', 'Add Some Dips', dipOptions, true);
+    }
+    
+    updateQuickViewPrice();
     quickViewModal.style.display = 'flex';
 }
-function handleQuickViewAddToCart(e) {
-    const radioGroup = e.target.closest('.size-radio-group');
-    if (radioGroup) {
-        const finalAddButton = getEl('quick-view-add-btn');
-        if (finalAddButton) {
-            finalAddButton.classList.remove('opacity-50', 'cursor-not-allowed');
-            finalAddButton.disabled = false;
-        }
-        return;
-    }
+function handleQuickViewInteraction(event) {
+    const target = event.target;
 
-    const finalAddButton = e.target.closest('#quick-view-add-btn');
-    if (finalAddButton) {
-        const selectedRadio = quickViewOptions.querySelector('input[type="radio"]:checked');
-        if (selectedRadio) {
-            const card = allMenuItems.find(c => c.dataset.id.startsWith(selectedRadio.name.replace('pizza-size-', '')));
-            const size = selectedRadio.value;
-            const price = selectedRadio.dataset.price;
-            const name = card.dataset.name;
-            const id = card.dataset.id;
-            
-            const finalName = `${name} - ${size}`;
-            const finalId = `${id}-${size.toLowerCase()}`;
-            addToCart(finalName, parseFloat(price), finalId, finalAddButton);
-            
-            setTimeout(() => { quickViewModal.style.display = 'none'; }, 500);
-        }
-        return;
-    }
+    // Cases 1, 2, and 3 for accordions, selections, and quantity are correct...
 
-    const simpleAddButton = e.target.closest('[data-price]');
-    if (simpleAddButton && !simpleAddButton.id) {
-        const { name, price, id } = simpleAddButton.dataset;
-        addToCart(name, parseFloat(price), id, simpleAddButton);
+    // --- Case 4: Clicked the final "Add to Cart" button ---
+    const addToCartBtn = target.closest('#qv-add-to-cart-btn');
+    if (addToCartBtn) {
+        const modalContent = quickViewModal.querySelector('.modal-content');
+        const itemTitle = modalContent.dataset.itemName;
+        const finalPrice = parseFloat(getEl('qv-total-price').textContent.replace('PKR ', ''));
+        const finalQuantity = parseInt(qvQuantitySpan.textContent, 10);
+        
+        // --- [THE FIX IS HERE] ---
+        let nameParts = [itemTitle]; // Start with the base name in an array
+
+        // Find selected size (if it's a pizza)
+        const selectedSize = quickViewOptions.querySelector('input[name="modal-pizza-size"]:checked');
+        if (selectedSize) {
+            // If it's a pizza, the size becomes part of the base name
+            nameParts = [`${itemTitle} - ${selectedSize.value}`];
+        }
+
+        // Find selected add-ons
+        const selectedAddons = quickViewOptions.querySelectorAll('input:checked:not([name="modal-pizza-size"])');
+        selectedAddons.forEach(addon => {
+            const label = document.querySelector(`label[for="${addon.id}"] span:first-child`);
+            if (label) {
+                nameParts.push(label.textContent.trim()); // Add each add-on to the array
+            }
+        });
+        
+        // Join all the parts with a comma and a space
+        const finalName = nameParts.join(', ');
+        // --- End of Fix ---
+        
+        const pricePerItem = finalPrice / finalQuantity;
+        const uniqueComboId = btoa(finalName); // Use the final name for a truly unique ID
+
+        addToCart(finalName, pricePerItem, uniqueComboId, addToCartBtn, finalQuantity);
+        
         setTimeout(() => { quickViewModal.style.display = 'none'; }, 500);
+        return;
+    }
+}
+function buildSizeSelectorUI(sizes, itemId) {
+    const optionsContainer = getEl('quick-view-options');
+    let sizeHTML = `<div class="mb-4"><p class="font-bold text-lg mb-3">Choose a size:</p><div class="size-radio-group">`;
+    
+    Object.entries(sizes).forEach(([size, price], index) => {
+        const uniqueId = `modal-size-${itemId}-${index}`;
+        sizeHTML += `<div><input type="radio" id="${uniqueId}" name="modal-pizza-size" value="${size}" data-price="${price}" ${index === 0 ? 'checked' : ''}><label for="${uniqueId}"><span class="font-semibold">${size}</span><span class="text-gray-400 mx-2 flex-grow border-b border-dotted border-gray-400"></span><span>PKR ${price.toFixed(2)}</span></label></div>`;
+    });
+    sizeHTML += `</div></div>`;
+    optionsContainer.insertAdjacentHTML('beforeend', sizeHTML);
+}
+function buildAddonAccordionUI(category, title, options, allowMultiple = false, target = 'quickview') {
+    const container = (target === 'addon') ? addonOptionsContainer : quickViewOptions;
+    if (!container) return;
+    
+    const inputType = allowMultiple ? 'checkbox' : 'radio';
+
+    let optionsHTML = '';
+options.forEach((option, index) => {
+    const uniqueId = `addon-${category}-${option.id}`;
+    optionsHTML += `
+        <div class="py-2">
+            <input type="${inputType}" id="${uniqueId}" name="addon-${category}" value="${option.id}" data-price="${option.price}">
+            <label for="${uniqueId}" class="flex justify-between items-center w-full cursor-pointer">
+                <!-- [THE FIX] Changed to a smaller text size -->
+                <span class="font-semibold text-gray-800 text-sm">${option.name}</span>
+                <!-- [THE FIX] Changed to an even smaller text size for the price -->
+                <span class="text-xs font-semibold text-gray-500">+ PKR ${option.price.toFixed(2)}</span>
+            </label>
+        </div>
+    `;
+});
+ const accordionHTML = `
+        <div class="addon-accordion-card" data-category="${category}">
+            <div class="addon-header">
+                <span>${title}</span>
+                <span class="flex items-center">
+                    <span class="optional-text mr-2">(Optional)</span>
+                    <svg class="arrow-icon h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+                </span>
+            </div>
+            <div class="addon-content size-radio-group">
+                ${optionsHTML}
+            </div>
+        </div>
+    `;
+    container.insertAdjacentHTML('beforeend', accordionHTML);
+}
+function updateQuickViewPrice() {
+    let totalPrice = 0;
+    const qvPriceDisplay = getEl('qv-total-price');
+    const qvQuantity = parseInt(getEl('qv-quantity').textContent, 10);
+    const modalContent = quickViewModal.querySelector('.modal-content');
+
+    // Get base price (from selected pizza size OR from the stored base price)
+    const selectedSize = quickViewOptions.querySelector('input[name="modal-pizza-size"]:checked');
+    if (selectedSize) {
+        totalPrice += parseFloat(selectedSize.dataset.price);
+    } else {
+        totalPrice += parseFloat(modalContent.dataset.basePrice);
+    }
+    
+    // Add prices of selected add-ons
+    const selectedAddons = quickViewOptions.querySelectorAll('input:checked:not([name="modal-pizza-size"])');
+    selectedAddons.forEach(addon => {
+        totalPrice += parseFloat(addon.dataset.price);
+    });
+
+    totalPrice *= qvQuantity;
+    qvPriceDisplay.textContent = `PKR ${totalPrice.toFixed(2)}`;
+}
+function handleQuickViewInteraction(event) {
+    const target = event.target;
+    const accordionHeader = target.closest('.addon-header');
+    if (accordionHeader) {
+        accordionHeader.parentElement.classList.toggle('open');
+        return;
+    }
+    if (target.matches('input[type="radio"], input[type="checkbox"]')) {
+        updateQuickViewPrice();
+    }
+    const decreaseBtn = target.closest('#qv-decrease-qty');
+    const increaseBtn = target.closest('#qv-increase-qty');
+    if (decreaseBtn || increaseBtn) {
+        let currentQty = parseInt(qvQuantitySpan.textContent, 10);
+        if (decreaseBtn && currentQty > 1) currentQty--;
+        else if (increaseBtn) currentQty++;
+        qvQuantitySpan.textContent = currentQty;
+        updateQuickViewPrice();
+        return;
+    }
+    const addToCartBtn = target.closest('#qv-add-to-cart-btn');
+    if (addToCartBtn) {
+        const modalContent = quickViewModal.querySelector('.modal-content');
+        const itemTitle = modalContent.dataset.itemName;
+        const baseItemId = modalContent.dataset.itemId;
+        const finalPrice = parseFloat(getEl('qv-total-price').textContent.replace('PKR ', ''));
+        const finalQuantity = parseInt(qvQuantitySpan.textContent, 10);
+        
+        let nameParts = []; // Start with an empty array
+
+        // Find selected size (if it's a pizza)
+        const selectedSize = quickViewOptions.querySelector('input[name="modal-pizza-size"]:checked');
+        if (selectedSize) {
+            // For pizzas, the base name includes the size
+            nameParts.push(`${itemTitle} - ${selectedSize.value}`);
+        } else {
+            // For regular items, just use the title
+            nameParts.push(itemTitle);
+        }
+
+        // Find selected add-ons
+        const selectedAddons = quickViewOptions.querySelectorAll('input:checked:not([name="modal-pizza-size"])');
+        selectedAddons.forEach(addon => {
+            const label = document.querySelector(`label[for="${addon.id}"] span:first-child`);
+            if (label) {
+                nameParts.push(label.textContent.trim()); // Add each add-on to the array
+            }
+        });
+        
+        // Join all the parts with a comma and a space
+        const finalName = nameParts.join(', ');
+        // --- End of Fix ---
+        
+        const pricePerItem = finalPrice / finalQuantity;
+        const uniqueComboId = btoa(finalName); // Use the final name for a truly unique ID
+
+        addToCart(finalName, pricePerItem, uniqueComboId, addToCartBtn, finalQuantity);
+        
+        setTimeout(() => { quickViewModal.style.display = 'none'; }, 500);
+        return;
     }
 }
         function setupScrollAnimations() { const observer = new IntersectionObserver((entries) => { entries.forEach(entry => { if (entry.isIntersecting) { entry.target.classList.add('fade-in-up'); observer.unobserve(entry.target); } }); }, { threshold: 0.1 }); queryAll('[data-animation="fade-in-up"]').forEach(section => { section.classList.add('opacity-0'); observer.observe(section); }); }
         function setupHeroSlider() { const slidesContainer = getEl("slides-container"), sliderDotsContainer = getEl("slider-dots"); if (!slidesContainer || !sliderDotsContainer) return; const slides = slidesContainer.children, numSlides = slides.length; let currentSlide = 0, slideInterval; for (let i = 0; i < numSlides; i++) { const dot = document.createElement("button"); dot.className = "w-3 h-3 rounded-full transition-colors duration-300"; dot.setAttribute("aria-label", `Go to slide ${i + 1}`); dot.addEventListener("click", () => { goToSlide(i); resetInterval(); }); sliderDotsContainer.appendChild(dot); } const dots = sliderDotsContainer.children; const goToSlide = (slideIndex) => { slidesContainer.style.transform = `translateX(-${slideIndex * 100}%)`; currentSlide = slideIndex; updateDots(); }; const updateDots = () => { for (let i = 0; i < numSlides; i++) { dots[i].classList.toggle("bg-white", i === currentSlide); dots[i].classList.toggle("bg-white/50", i !== currentSlide); } }; const nextSlide = () => goToSlide((currentSlide + 1) % numSlides); const startInterval = () => slideInterval = setInterval(nextSlide, 5000); const resetInterval = () => { clearInterval(slideInterval); startInterval(); }; goToSlide(0); startInterval(); }    
-        function updateMenuDisplay() { const searchTerm = searchBar.value.toLowerCase().trim(); let visibleItemCount = 0; allMenuItems.forEach(card => { const categoryMatch = currentCategory === 'all' || card.dataset.category === currentCategory; const name = card.dataset.name.toLowerCase(); const description = card.dataset.description.toLowerCase(); const searchMatch = name.includes(searchTerm) || description.includes(searchTerm); if ((searchTerm !== '' && searchMatch) || (searchTerm === '' && categoryMatch)) { card.classList.remove('hidden'); visibleItemCount++; } else { card.classList.add('hidden'); } }); noResultsMessage.style.display = visibleItemCount === 0 ? 'block' : 'none'; const sortValue = sortSelect.value; if (sortValue !== 'default') { let visibleItems = allMenuItems.filter(item => !item.classList.contains('hidden')); visibleItems.sort((a, b) => { const priceA = parseFloat(a.dataset.price) || (a.dataset.sizes ? JSON.parse(a.dataset.sizes).Small : 0); const priceB = parseFloat(b.dataset.price) || (b.dataset.sizes ? JSON.parse(b.dataset.sizes).Small : 0); return sortValue === 'price-asc' ? priceA - priceB : priceB - priceA; }); visibleItems.forEach(item => menuItemsContainer.appendChild(item)); } }
+  function updateMenuDisplay() {
+    const searchTerm = searchBar.value.toLowerCase().trim();
+    let visibleItemCount = 0;
+    
+    // [THE FIX] Use the array of HTML elements for filtering
+    allMenuItemElements.forEach(card => {
+        const categoryMatch = currentCategory === '' || card.dataset.category === currentCategory;
+        const name = card.dataset.name.toLowerCase();
+        const description = card.dataset.description.toLowerCase();
+        const searchMatch = name.includes(searchTerm) || description.includes(searchTerm);
+        if ((searchTerm !== '' && searchMatch) || (searchTerm === '' && categoryMatch)) {
+            card.classList.remove('hidden');
+            visibleItemCount++;
+        } else {
+            card.classList.add('hidden');
+        }
+    });
+
+    noResultsMessage.style.display = visibleItemCount === 0 ? 'block' : 'none';
+        const sortValue = sortSelect.value;
+    if (sortValue !== 'default') {
+        let visibleItems = allMenuItemElements.filter(item => !item.classList.contains('hidden'));
+        
+        visibleItems.sort((elementA, elementB) => {
+            // Get the ID from each HTML element
+            const idA = elementA.dataset.id;
+            const idB = elementB.dataset.id;
+
+            // Find the corresponding full data object in our raw data array
+            const itemDataA = allMenuItemsData.find(item => item.id == idA);
+            const itemDataB = allMenuItemsData.find(item => item.id == idB);
+
+            if (!itemDataA || !itemDataB) return 0; // Safety check if data is missing
+
+            // For pizzas, use the price of the first  size. For others, use their standard price.
+            const priceA = itemDataA.sizes ? Object.values(itemDataA.sizes)[0] : itemDataA.price;
+            const priceB = itemDataB.sizes ? Object.values(itemDataB.sizes)[0] : itemDataB.price;
+
+            const numericPriceA = parseFloat(priceA || 0);
+            const numericPriceB = parseFloat(priceB || 0);
+
+            return sortValue === 'price-asc' ? numericPriceA - numericPriceB : numericPriceB - numericPriceA;
+        });
+        visibleItems.forEach(element => menuItemsContainer.appendChild(element));
+    }
+}
         initApp();
     });
     </script>
-<div id="quick-view-modal" class="modal">
-    <div class="modal-content !max-w-4xl grid md:grid-cols-2 gap-8 items-center">
-        <span id="close-quick-view" class="absolute top-4 right-4 text-gray-600 text-3xl font-bold cursor-pointer hover:text-gray-900" aria-label="Close quick view">&times;</span>
-        <img id="quick-view-image" src="" alt="Quick view of menu item" class="w-full h-64 md:h-full object-cover rounded-lg">
-        <div class="flex flex-col h-full">
-            <h3 id="quick-view-title" class="text-3xl font-bold mb-2"></h3>
-            <p id="quick-view-description" class="text-gray-600 mb-4 flex-grow"></p>
-            <div id="quick-view-options">
+<div id="quick-view-modal" class="modal p-0 md:p-4">
+    <div class="modal-content !p-0 !max-w-full md:!max-w-4xl h-full md:h-auto md:max-h-[90vh] flex flex-col">
+        
+        <!-- [THE FIX] Close button is now a direct child of modal-content -->
+        <button id="close-quick-view" class="absolute top-2 right-6 bg-white rounded-full p-2 border-2 hover:bg-orange-300 border-orange-500 hover:border-orange-500 transition duration-200 z-20">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+        </button>
+
+        <!-- Main Scrollable Area -->
+        <div class="flex-grow overflow-y-auto">
+            
+            <!-- Image Container (for REGULAR items) -->
+            <div id="qv-regular-image-container" class="relative p-4 rounded-lg">
+                <img id="quick-view-image" src="" alt="Quick view of menu item" class="w-full h-auto max-h-48 md:max-h-80 object-contain rounded-lg">
+                <!-- The button is no longer here -->
             </div>
-            <div class="mt-6 text-center md:hidden">
-                <button id="mobile-close-quick-view" class="w-full bg-red-600 text-white font-semibold py-3 px-6 rounded-full hover:bg-red-500 transition">Close</button>
+            
+            <div class="p-4">
+                <!-- Pizza Image Header (hidden by default) -->
+                <div id="qv-pizza-image-header" class="hidden text-center pb-4 mb-4">
+                    <img id="qv-pizza-image" src="" alt="Pizza" class="w-full h-auto max-h-48 md:max-h-80 object-contain rounded-lg">
+                </div>
+
+                <h3 id="quick-view-title" class="text-2xl md:text-3xl font-bold mb-1"></h3>
+                <p id="quick-view-description" class="text-sm text-gray-600 mb-4"></p>
+
+                <!-- Quantity for Main Item -->
+                <div id="qv-main-quantity-controls" class="flex items-center justify-center space-x-4 my-4">
+                    <button id="qv-decrease-qty" class="quantity-btn-outline text-2xl">-</button>
+                    <span id="qv-quantity" class="text-3xl font-bold w-16 text-center">1</span>
+                    <button id="qv-increase-qty" class="quantity-btn-outline text-2xl">+</button>
+                </div>
+            </div>
+
+            <!-- Add-ons Container -->
+            <div id="quick-view-options" class="px-4 pb-4 space-y-3"></div>
+        </div>
+
+        <!-- Sticky Footer -->
+        <div class="footer-content border-t p-3 flex-shrink-0">
+            <button id="qv-add-to-cart-btn" class="w-full bg-orange-500 text-white font-bold py-3 px-6 rounded-full hover:bg-orange-600 transition shadow-lg text-lg flex justify-between items-center">
+                <span>Add to Cart</span>
+                <span id="qv-total-price" class="font-semibold">PKR 0.00</span>
+            </button>
+            <!-- Mobile Close Button is now inside the footer -->
+            <div class="mt-2 text-center md:hidden">
+                <button id="mobile-close-quick-view" class="bg-transparent text-gray-500 font-semibold py-2 hover:text-gray-800 transition">Close</button>
             </div>
         </div>
     </div>
@@ -1466,7 +1851,6 @@ function handleQuickViewAddToCart(e) {
         <div class="p-6 border-t bg-gray-50">
             <div class="text-center mb-4">
                 <p class="text-md text-red-700 font-semibold">
-                    Save your receipt and send it to our WhatsApp to confirm your order!
                 </p>
             </div>
             <div class="grid grid-cols-2 gap-4">
