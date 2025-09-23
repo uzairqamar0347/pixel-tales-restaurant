@@ -1076,7 +1076,6 @@ if (quickViewModal) {
         mobileCloseQuickViewBtn.addEventListener('click', closeModal);
     }
     
-    // Close by clicking the dark overlay background
     quickViewModal.addEventListener('click', (e) => { 
         if (e.target.id === 'quick-view-modal') {
             closeModal();
@@ -1101,10 +1100,8 @@ if (quickViewModal) {
     }
 }
 if (addonModal) {
-    // This single handler manages all interactions inside the modal
     addonModal.addEventListener('click', handleAddonInteraction);
 
-    // This handles closing the modal
     const closeAddon = () => { addonModal.style.display = 'none'; };
     closeAddonModalBtn.addEventListener('click', closeAddon);
     addonModal.addEventListener('click', (e) => {
@@ -1185,11 +1182,9 @@ function handleMenuInteraction(e) {
             const defaultSize = Object.keys(sizes)[0];
             const price = sizes[defaultSize];
             const finalName = `${itemData.name} - ${defaultSize}`;
-            // [THE FIX] Ensure the ID is always a string from the start
             const finalId = `${itemData.id}-${defaultSize.toLowerCase()}`;
             addToCart(finalName, price, finalId);
         } else {
-            // [THE FIX] Ensure the ID is always a string
             addToCart(itemData.name, parseFloat(itemData.price), String(itemData.id));
         }
         cartButton.click();
@@ -1387,10 +1382,7 @@ function updateCartUI() {
         function handleCartQuantityChange(e) {
     if (e.target.matches('.decrease-quantity-btn, .increase-quantity-btn')) {
         const idFromButton = e.target.dataset.id;
-        
-        // --- [THE FIX IS HERE] ---
-        // Use a loose equality check (==) to match strings and numbers (e.g., "2" == 2)
-        // For combos, we still need a strict check. Let's find the item by its 'id' property.
+
         const itemIndex = cart.findIndex(item => item.id == idFromButton);
         // --- End of Fix ---
 
@@ -1439,7 +1431,6 @@ async function openQuickView(itemId) {
     const item = allMenuItemsData.find(i => i.id == itemId);
     if (!item) return;
 
-    // --- Get references to all the modal parts ---
     const regularImageContainer = getEl('qv-regular-image-container');
     const pizzaImageHeader = getEl('qv-pizza-image-header');
     const pizzaImage = getEl('qv-pizza-image');
@@ -1447,7 +1438,6 @@ async function openQuickView(itemId) {
     const modalTitle = getEl('quick-view-title');
     const modalDescription = getEl('quick-view-description');
 
-    // --- Setup based on item type (Pizza vs. Regular) ---
     if (item.sizes) {
         // PIZZA FLOW
         regularImageContainer.style.display = 'none';
@@ -1457,7 +1447,6 @@ async function openQuickView(itemId) {
         modalTitle.textContent = `Customize Your ${item.name}`;
         modalDescription.textContent = item.description;
     } else {
-        // REGULAR ITEM FLOW
         regularImageContainer.style.display = 'block';
         mainQuantityControls.style.display = 'flex';
         getEl('quick-view-image').src = item.image_url;
@@ -1466,7 +1455,6 @@ async function openQuickView(itemId) {
         modalDescription.textContent = item.description;
     }
     
-    // --- Universal setup steps ---
     const modalContent = quickViewModal.querySelector('.modal-content');
     modalContent.dataset.itemId = item.id;
     modalContent.dataset.basePrice = item.price || 0;
@@ -1476,19 +1464,16 @@ async function openQuickView(itemId) {
     optionsContainer.innerHTML = '';
     getEl('qv-quantity').textContent = '1';
 
-    // --- Fetch all possible add-ons ---
     const { data: allAddons } = await db.from('add_ons').select('*');
     if (!allAddons) { 
         optionsContainer.innerHTML = '<p class="text-red-500">Could not load options.</p>';
         return; 
     }
     
-    // --- Build the dynamic UI sections ---
     if (item.sizes) {
         buildSizeSelectorUI(item.sizes, item.id);
     }
 
-    // --- [THE FIX IS HERE] ADD THE ADD-ON LOGIC BACK ---
     const addonCategories = item.addon_categories || [];
     
     if (addonCategories.includes('drinks')) {
@@ -1501,11 +1486,9 @@ async function openQuickView(itemId) {
     }
     if (addonCategories.includes('dips')) {
         const dipOptions = allAddons.filter(addon => addon.category === 'dips');
-        buildAddonAccordionUI('dips', 'Add Some Dips', dipOptions, true);
+        buildAddonAccordionUI('dips', 'Add Some Dips', dipOptions);
     }
-    // --- End of Fix ---
     
-    // --- Final setup ---
     updateQuickViewPrice();
     quickViewModal.style.display = 'flex';
 }
@@ -1605,26 +1588,41 @@ function buildSizeSelectorUI(sizes, itemId) {
 }
 function buildAddonAccordionUI(category, title, options, allowMultiple = false, target = 'quickview') {
     const container = (target === 'addon') ? addonOptionsContainer : quickViewOptions;
-    if (!container) return;
+    if (!container || options.length === 0) return;
     
     const inputType = allowMultiple ? 'checkbox' : 'radio';
-
     let optionsHTML = '';
-options.forEach((option, index) => {
-    const uniqueId = `addon-${category}-${option.id}`;
-    optionsHTML += `
-        <div class="py-2">
-            <input type="${inputType}" id="${uniqueId}" name="addon-${category}" value="${option.id}" data-price="${option.price}">
-            <label for="${uniqueId}" class="flex justify-between items-center w-full cursor-pointer">
-                <!-- [THE FIX] Changed to a smaller text size -->
-                <span class="font-semibold text-gray-800 text-sm">${option.name}</span>
-                <!-- [THE FIX] Changed to an even smaller text size for the price -->
-                <span class="text-xs font-semibold text-gray-500">+ PKR ${option.price.toFixed(2)}</span>
-            </label>
-        </div>
-    `;
-});
- const accordionHTML = `
+
+    // --- [THE FIX IS HERE] ---
+    // If it's a single-choice group (radio), add a "None" option first.
+    if (!allowMultiple) {
+        const uniqueId = `addon-${category}-none`;
+        optionsHTML += `
+            <div class="py-2">
+                <input type="radio" id="${uniqueId}" name="addon-${category}" value="none" data-price="0" checked>
+                <label for="${uniqueId}" class="flex justify-between items-center w-full cursor-pointer">
+                    <span class="font-semibold text-gray-800 text-sm">None</span>
+                </label>
+            </div>
+        `;
+    }
+    // --- End of Fix ---
+
+    // Now, build the rest of the options as before
+    options.forEach((option) => {
+        const uniqueId = `addon-${category}-${option.id}`;
+        optionsHTML += `
+            <div class="py-2">
+                <input type="${inputType}" id="${uniqueId}" name="addon-${category}" value="${option.id}" data-price="${option.price}">
+                <label for="${uniqueId}" class="flex justify-between items-center w-full cursor-pointer">
+                    <span class="font-semibold text-gray-800 text-sm">${option.name}</span>
+                    <span class="text-xs font-semibold text-gray-500">+ PKR ${option.price.toFixed(2)}</span>
+                </label>
+            </div>
+        `;
+    });
+
+    const accordionHTML = `
         <div class="addon-accordion-card" data-category="${category}">
             <div class="addon-header">
                 <span>${title}</span>
@@ -1820,11 +1818,7 @@ function handleQuickViewInteraction(event) {
                 <span>Add to Cart</span>
                 <span id="qv-total-price" class="font-semibold">PKR 0.00</span>
             </button>
-            <!-- Mobile Close Button is now inside the footer -->
-            <div class="mt-2 text-center md:hidden">
-                <button id="mobile-close-quick-view" class="bg-transparent text-gray-500 font-semibold py-2 hover:text-gray-800 transition">Close</button>
-            </div>
-        </div>
+         </div>
     </div>
 </div>
 <div id="order-confirmation-card" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center hidden z-50"  >
