@@ -1245,21 +1245,35 @@ function showToastNotification(message, type = 'success') {
             const itemDiv = document.createElement('div');
             itemDiv.className = 'flex items-center justify-between py-4';
             const isChecked = item.is_available ? 'checked' : '';
-            // The rest of your rendering code for the item...
-            itemDiv.innerHTML = `<div class="flex items-center"><img src="${item.image_url}" alt="${item.name}" class="h-12 w-12 object-cover rounded-md mr-4"><div><p class="font-bold">${item.name}</p><p class="text-sm text-gray-500">${item.category}</p></div></div>
-    <div class="flex items-center space-x-4">
-        <label class="flex items-center cursor-pointer">
-            <div class="relative">
-                <input type="checkbox" data-id="${item.id}" class="sr-only availability-toggle" ${item.is_available ? 'checked' : ''}>
-                <div class="block bg-gray-600 w-14 h-8 rounded-full"></div>
-                <div class="dot absolute left-1 top-1 bg-white w-6 h-6 rounded-full transition"></div>
-            </div>
-        </label>
-        <button data-id="${item.id}" class="edit-item-btn text-blue-500 hover:text-blue-700 font-semibold">Edit</button>
-        <button data-id="${item.id}" class="delete-item-btn text-red-500 hover:text-red-700 px-2 py-1 rounded-md hover:bg-red-100 transition-colors" title="Delete Item">
-    <i class="fas fa-trash-alt"></i>
-</button>
-    </div>`;
+           itemDiv.innerHTML = `
+                <!-- Left side: Image and Text -->
+                <div class="flex items-center flex-grow min-w-0">
+                    <img src="${item.image_url || 'https://via.placeholder.com/150'}" alt="${item.name}" class="h-12 w-12 object-cover rounded-md mr-4 flex-shrink-0">
+                    <div class="min-w-0">
+                        <p class="font-bold truncate">${item.name}</p>
+                        <p class="text-sm text-gray-500">${item.category}</p>
+                    </div>
+                </div>
+
+                <!-- Right side: Actions Column -->
+                <div class="flex flex-col md:flex-row items-center space-y-2 md:space-y-0 md:space-x-4 ml-4">
+                    <!-- The toggle switch -->
+                    <label class="flex items-center cursor-pointer">
+                        <div class="relative">
+                            <input type="checkbox" data-id="${item.id}" class="sr-only availability-toggle" ${item.is_available ? 'checked' : ''}>
+                            <div class="block bg-gray-600 w-14 h-8 rounded-full"></div>
+                            <div class="dot absolute left-1 top-1 bg-white w-6 h-6 rounded-full transition"></div>
+                        </div>
+                    </label>
+                    <!-- The Edit/Delete buttons -->
+                    <div class="flex items-center space-x-2">
+                         <button data-id="${item.id}" class="edit-item-btn text-blue-500 hover:text-blue-700 font-semibold text-sm">Edit</button>
+                         <button data-id="${item.id}" class="delete-item-btn text-red-500 hover:text-red-700 px-2 py-1 rounded-md hover:bg-red-100 transition-colors" title="Delete Item">
+                            <i class="fas fa-trash-alt"></i>
+                         </button>
+                    </div>
+                </div>
+            `;
             menuManagementList.appendChild(itemDiv);
         });
     }
