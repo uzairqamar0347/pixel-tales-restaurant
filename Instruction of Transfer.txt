@@ -1,0 +1,123 @@
+<<<<<<< HEAD
+How You Will Transfer the Data to the Owner
+You have completed the hard part. The rest of the process is now exactly the same as in our original plan, but you will use your schema_blueprint.txt file instead of the CLI.
+
+Here is the updated, clear workflow from this point forward:
+
+Step 1: Execute the Blueprint on the New Project
+The restaurant owner creates their new, empty Supabase project.
+You get the login details for their new project.
+Go to the owner's new Supabase Dashboard and open the SQL Editor.
+Copy the entire content of your schema_blueprint.txt file.
+Paste it into the SQL Editor.
+Click RUN.
+Result: The owner's database is now a perfect, secure, empty clone of yours. All the tables and security rules are in place.
+Step 2: Transfer the Data (Content) using CSV
+This part has not changed.
+
+Go to your original Supabase Dashboard.
+Go to the Table Editor.
+Export the data from these tables as .csv files and save them to your PC:
+categories
+menu_items
+(any other tables with data you need)
+Step 3: Import the Data into the New Project
+Go back to the owner's new Supabase Dashboard.
+Go to the Table Editor. The tables you created in Step 1 will be there, but empty.
+Import the .csv files you just saved. The order is important.
+First, select the categories table and import categories.csv.
+Then, select the menu_items table and import menu_items.csv.
+Result: The owner's database now contains all of your menu data.
+Step 4: Update and Deliver the Website
+This is the final handover.
+
+Get the URL and anon key from the owner's project settings (under Project Settings -> API).
+Open your index.html file.
+Update the Supabase credentials in your JavaScript with the owner's new keys.
+Save the index.html file.
+Deliver the final index.html file (and any image assets) to the owner for them to host.
+You have successfully completed the full migration. The manual creation of the blueprint was just a different, more reliable way of achieving the same goal as the CLI. You are in a great position to finish this.
+=======
+SOP: Deploying the Pixel Tales Order System for a New Client (Final Version)
+Objective: To create a complete, secure, and functional copy of the ordering system for a new client using a new Supabase project.
+
+Phase 1: Backend Creation & Configuration
+This phase creates the entire server-side infrastructure in one go.
+
+Create a New Supabase Project:
+
+Go to the Supabase dashboard and create a brand new, empty project.
+Give it a name relevant to the client (e.g., client-restaurant-name).
+Choose a server region that is physically close to the client's business.
+When prompted, create a new, strong database password and save it immediately in a secure password manager. You will need this.
+Run the Master Blueprint Script:
+
+Navigate to the SQL Editor in the newly created project.
+Open your final, corrected Master_Blueprint_v3.sql file.
+Copy the entire contents of the script.
+Paste the entire script into the SQL Editor window.
+Click the green "RUN" button.
+Verification: Wait for the "Success" message. The script will create all tables, enable Row Level Security, create all security policies for tables and storage, and enable Realtime.
+Configure the Storage Bucket:
+
+In the new project's dashboard, go to Storage.
+Click "Create a new bucket".
+Name the bucket exactly menu-images.
+Toggle the switch to make the bucket Public.
+Click "Create bucket".
+Create the Admin User:
+
+Go to Authentication (the user icon).
+Click the "Add user" button.
+Enter the client's email address and create a strong, secure password for their admin panel login.
+Save these login details to give to the client later.
+Phase 2: Data Seeding (For Demo/Pre-populated Sites)
+Follow this phase if you are providing the client with your placeholder menu. If it's a clean install for them to build from scratch, skip this phase.
+
+Export Data from Your Original Project:
+
+Go to your original project's dashboard.
+Navigate to the Table Editor.
+For each of the following tables, click on it and then click the "Download CSV" icon:
+categories
+add_ons
+coupons
+menu_items
+Import Data to the New Project:
+
+Go to the new client's project dashboard.
+Navigate to the Table Editor.
+For each table (in the same order as above), click on it, then click Insert > Import data from CSV, and upload the corresponding CSV file.
+Run the ID Counter Sync Script:
+
+This is a critical step after importing data.
+Go to the SQL Editor in the new project.
+Paste ONLY Part 6 of your Master Blueprint script (the SELECT setval(...) commands).
+Click the "RUN" button. This syncs the ID counters to prevent "duplicate key" errors.
+Phase 3: Finalization and Handover
+This is the final step where you connect the website files to the new backend and deliver everything to the client.
+
+Get the New Project's API Keys:
+
+In the new client's project dashboard, go to Project Settings (the gear icon).
+Click on "API".
+You need two pieces of information: the Project URL and the anon public key.
+Update the Client's Code Files:
+
+Create a final copy of your project folder for the client.
+Open the index.html and admin.html files in your code editor.
+In both files, find the Supabase client initialization script at the top.
+Replace the old SUPABASE_URL and SUPABASE_ANON_KEY with the new ones you just copied.
+Save both files.
+Deliver the Project Files:
+
+Zip the entire project folder.
+Send this .zip file to the client for them to host.
+Provide Credentials and Instructions:
+
+Send the client a clear, simple message containing:
+The URL to their new Admin Panel.
+The admin login email and password you created for them.
+The security best practices we discussed (keep the password safe, enable 2FA on their email account, etc.).
+You have now completed a full, professional, and repeatable project transfer.
+>>>>>>> b72dfc3 (Initial project setup for deployment)

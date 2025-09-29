@@ -1,0 +1,1683 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - Pixel Tales</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .order-card { border-left-width: 5px; transition: all 0.2s ease-in-out; }
+        .order-card.status-pending { border-color: #22c55e; }
+        .order-card.status-preparing { border-color: #f59e0b; }
+        .order-card.status-completed { border-color: #6b7280; opacity: 0.7; }
+        .order-card:hover, .order-card.selected { transform: scale(1.02); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05); }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        #admin-panel section, #admin-panel #page-container { animation: fadeIn 0.5s ease-out forwards; }
+        @keyframes slideInDown { from { opacity: 0; transform: translateY(-20px); max-height: 0; padding-top: 0; padding-bottom: 0; margin-bottom: 0; } to { opacity: 1; transform: translateY(0); max-height: 200px; padding-top: 1rem; padding-bottom: 1rem; margin-bottom: 1rem; } }
+        .order-card.new-order-animation { animation: slideInDown 0.5s ease-out forwards; }
+        #details-content { transition: opacity 0.3s ease-in-out; }
+        .nav-btn { transition: all 0.2s ease-in-out; }
+        .nav-btn.active { background-color: white; color: #2563eb; box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1); }
+        .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); border: 0; }
+        input:checked ~ .dot { transform: translateX(100%); background-color: #ffffff; }
+        input:checked ~ .block { background-color: #22c55e; }
+        /* PASTE THIS NEW AND IMPROVED VERSION */
+@media print {
+    @page {
+        size: auto;
+        margin: 0mm; 
+    }
+
+    html, body {
+        margin: 0 !important;
+        padding: 0 !important;
+        width: auto !important; /* Added for safety */
+    }
+
+    body * {
+        visibility: hidden;
+    }
+    #details-content, #details-content * {
+        visibility: visible;
+    }
+    #details-content {
+        position: absolute;
+        left: 0;
+        top: 0;
+        margin: 0;
+        padding: 0 5mm 5mm 5mm;
+                width: auto;
+        
+        border: none;
+        box-shadow: none;
+        display: block;
+    }
+    #status-buttons, #print-ticket-btn {
+        display: none !important;
+    }
+body {
+        font-family: 'Courier New', 'Lucida Console', monospace;
+        font-size: 10pt; 
+        color: #000;
+        background-color: #fff;
+    }
+    
+    h2, h3, p, strong, span, li, div {
+        font-family: 'Courier New', 'Lucida Console', monospace !important;
+        font-size: 10pt !important;
+        color: #000 !important;
+        background-color: transparent !important;
+        text-align: left;
+    }
+
+    h2 {
+        font-size: 14pt !important;
+        font-weight: 700 !important;
+        text-align: center !important;
+        margin-bottom: 10px;
+        margin-top: 0 !important; 
+    }
+    
+    h3 {
+        font-size: 12pt !important;
+        font-weight: 700 !important;
+        border-top: 2px dashed #000;
+        border-bottom: 2px dashed #000;
+        padding-top: 5px;
+        padding-bottom: 5px;
+        margin-top: 15px;
+        margin-bottom: 10px;
+    }
+    
+    ul { list-style: none; padding: 0; margin: 0; }
+    li { padding: 4px 0; display: block; font-weight: 700; }
+    hr { border: none; border-top: 2px dashed #000; margin: 10px 0; }
+    .final-total-line { font-size: 14pt !important; font-weight: 700 !important; border-top: 2px solid #000; border-bottom: 2px solid #000; padding: 8px 0; }
+}
+    </style>
+</head>
+<body class="bg-gray-100">
+    <header class="hidden md:block bg-white shadow-md">
+    <nav class="container mx-auto px-4 sm:px-6 py-3 flex justify-between items-center">
+        <div class="hidden md:flex items-center space-x-2 sm:space-x-4">
+            <img src="https://img.freepik.com/premium-vector/burger-logo_1366-144.jpg" alt="Pixel Tales Logo" class="h-12 sm:h-16">
+            <div class="flex items-center space-x-1 sm:space-x-2 rounded-lg bg-gray-100 p-1">
+                <button id="nav-orders-btn" class="nav-btn active bg-white text-blue-600 shadow rounded-md font-semibold py-2 px-3 sm:px-4">
+                    <i class="fa-solid fa-clipboard-list sm:mr-2"></i>
+                    <span class="hidden sm:inline">View Orders</span>
+                </button>
+                <button id="nav-menu-btn" class="nav-btn text-gray-500 rounded-md font-semibold py-2 px-3 sm:px-4">
+                    <i class="fa-solid fa-book-open sm:mr-2"></i>
+                    <span class="hidden sm:inline">Manage Menu</span>
+                </button>
+                <button id="nav-addons-btn" class="nav-btn text-gray-500 rounded-md font-semibold py-2 px-3 sm:px-4">
+    <i class="fa-solid fa-plus-square sm:mr-2"></i>
+    <span class="hidden sm:inline">Manage Addons</span>
+</button>
+ <button id="nav-coupons-btn" class="nav-btn text-gray-500 rounded-md font-semibold py-2 px-3 sm:px-4">
+        <i class="fa-solid fa-ticket-alt sm:mr-2"></i>
+        <span class="hidden sm:inline">Manage Coupons</span>
+    </button>
+            </div>
+        </div>
+        <div class="flex items-center space-x-2 sm:space-x-4"> 
+          <button id="status-toggle-btn" class="bg-red-500 text-white font-semibold py-2 px-4 rounded-lg flex items-center space-x-1">
+        <span id="status-text">Restaurant Closed</span>
+    </button>
+            <button id="sound-toggle-btn" class="bg-red-500 text-white font-semibold py-2 px-3 sm:px-4 rounded-lg flex items-center space-x-2">
+                <svg id="sound-off-icon" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" clip-rule="evenodd" /><path stroke-linecap="round" stroke-linejoin="round" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" /></svg>
+                <svg id="sound-on-icon" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" /></svg>
+                <span id="sound-status-text" class="hidden sm:inline">Sounds Off</span>
+            </button>
+            <button id="logout-btn" class="bg-gray-600 text-white font-semibold py-2 px-3 sm:px-4 rounded-lg hover:bg-gray-700 transition">
+                <i class="fa-solid fa-right-from-bracket sm:mr-2"></i>
+                <span class="hidden sm:inline">Logout</span>
+            </button>
+        </div>
+    </nav>
+</header>
+    <div id="password-prompt" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50">
+    <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-sm">
+        <h2 class="text-2xl font-bold mb-4 text-center">Admin Login</h2>
+        <form id="login-form" class="space-y-4">
+            <div>
+                <label for="email-input" class="block font-medium">Email</label>
+                <input type="email" id="email-input" class="w-full p-2 border border-gray-300 rounded-md" required>
+            </div>
+            <div>
+                <label for="password-input" class="block font-medium">Password</label>
+                <input type="password" id="password-input" class="w-full p-2 border border-gray-300 rounded-md" required>
+            </div>
+            <button id="password-submit" type="submit" class="w-full bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-blue-700">Login</button>
+            <p id="login-error" class="text-red-500 text-sm text-center h-4"></p>
+        </form>
+    </div>
+</div>
+    <div id="admin-panel" class="hidden p-6 space-y-6">
+      <div id="mobile-actions-bar" class="bg-white p-2 shadow-md md:hidden sticky top-0 z-40">
+    <!-- Row 1: The Action Buttons -->
+    <div class="grid grid-cols-3 gap-2 mb-2">
+        <button id="status-toggle-btn-mobile" class="bg-red-500 text-white font-semibold py-2 px-3 rounded-lg flex items-center justify-center text-sm">
+            <span id="status-text-mobile">Closed</span>
+        </button>
+        <button id="sound-toggle-btn-mobile" class="bg-red-500 text-white font-semibold py-2 px-3 rounded-lg flex items-center justify-center">
+            <!-- You can add an icon here if you want -->
+            <span class="text-sm">Sounds</span>
+        </button>
+        <button id="logout-btn-mobile" class="bg-gray-600 text-white font-semibold py-2 px-3 rounded-lg flex items-center justify-center">
+            <i class="fa-solid fa-right-from-bracket"></i>
+        </button>
+    </div>
+    <div class="flex items-center space-x-1 sm:space-x-2 rounded-lg bg-gray-100 p-1">
+        <!-- We reuse the nav buttons from the desktop header, but make them mobile-friendly -->
+        <button id="nav-orders-btn-mobile" class="nav-btn-mobile flex-1 active bg-white text-blue-600 shadow rounded-md font-semibold py-2 px-2 text-center text-xs">
+            <i class="fa-solid fa-clipboard-list"></i>
+            <span class="block">Orders</span>
+        </button>
+        <button id="nav-menu-btn-mobile" class="nav-btn-mobile flex-1 text-gray-500 rounded-md font-semibold py-2 px-2 text-center text-xs">
+            <i class="fa-solid fa-book-open"></i>
+            <span class="block">Menu</span>
+        </button>
+        <button id="nav-addons-btn-mobile" class="nav-btn-mobile flex-1 text-gray-500 rounded-md font-semibold py-2 px-2 text-center text-xs">
+            <i class="fa-solid fa-plus-square"></i>
+            <span class="block">Addons</span>
+        </button>
+        <button id="nav-coupons-btn-mobile" class="nav-btn-mobile flex-1 text-gray-500 rounded-md font-semibold py-2 px-2 text-center text-xs">
+            <i class="fa-solid fa-ticket-alt"></i>
+            <span class="block">Coupons</span>
+        </button>
+    </div>
+</div>
+        <section id="dashboard-summary">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="bg-white p-6 rounded-lg shadow-lg flex items-center justify-between"><div><p class="text-sm font-medium text-gray-500">New Orders</p><p id="stat-new-orders" class="text-3xl font-bold text-green-500">0</p></div><div class="bg-green-100 p-3 rounded-full"><svg class="h-8 w-8 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg></div></div>
+                <div class="bg-white p-6 rounded-lg shadow-lg flex items-center justify-between"><div><p class="text-sm font-medium text-gray-500">In Progress</p><p id="stat-in-progress" class="text-3xl font-bold text-amber-500">0</p></div><div class="bg-amber-100 p-3 rounded-full"><svg class="h-8 w-8 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg></div></div>
+                <div class="bg-white p-6 rounded-lg shadow-lg flex items-center justify-between"><div><p class="text-sm font-medium text-gray-500">Total Sales Today</p><p id="stat-sales-today" class="text-3xl font-bold text-blue-600">PKR 0</p></div><div class="bg-blue-100 p-3 rounded-full"><svg class="h-8 w-8 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v.01" /></svg></div></div>
+            </div>
+        </section>
+        <section id="daily-special-controls" class="bg-white p-6 rounded-lg shadow-lg">
+    <div class="flex items-center justify-between border-b pb-4 mb-4">
+        <h3 class="text-2xl font-bold">Daily Special Banner</h3>
+        <!-- The On/Off Toggle Switch -->
+        <label class="flex items-center cursor-pointer">
+            <div class="relative">
+                <input type="checkbox" id="special-active-toggle" class="sr-only">
+                <div class="block bg-gray-600 w-14 h-8 rounded-full"></div>
+                <div class="dot absolute left-1 top-1 bg-white w-6 h-6 rounded-full transition"></div>
+            </div>
+        </label>
+    </div>
+    <div class="form-group">
+        <label for="special-message-input" class="font-semibold">Banner Message:</label>
+        <input type="text" id="special-message-input" placeholder="e.g., Taco Tuesday: 2-for-1 Tacos!" class="w-full p-2 border rounded-md">
+    </div>
+    <button id="save-special-btn" class="mt-4 bg-blue-600 text-white font-semibold py-2 px-6 rounded-lg hover:bg-blue-700">Update Banner</button>
+</section>
+        <div id="page-container">
+            <div id="orders-page">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <aside class="md:col-span-1 bg-white p-6 rounded-lg shadow-lg h-full">
+                        <h2 class="text-3xl font-bold border-b pb-4 mb-4">Incoming Orders</h2>
+                        <div id="filter-buttons" class="flex flex-wrap gap-2 mb-4">
+                            <button data-status="active" class="filter-btn flex-1 bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg">Active</button>
+                            <button data-status="Preparing" class="filter-btn flex-1 bg-gray-200 text-gray-700 font-semibold py-2 px-4 rounded-lg">Preparing</button>
+                            <button data-status="Completed" class="filter-btn flex-1 bg-gray-200 text-gray-700 font-semibold py-2 px-4 rounded-lg">Completed</button>
+                        </div>
+                        <div id="orders-feed" class="space-y-4 overflow-y-auto max-h-[85vh]">
+                            <p id="loading-orders" class="text-gray-500">Loading orders...</p>
+                        </div>
+                    </aside>
+                    <main class="md:col-span-2 bg-white p-8 rounded-lg shadow-lg h-full">
+                        <div id="order-details-view">
+                            <div id="no-order-selected" class="text-center text-gray-400"><h3 class="text-2xl font-semibold">Select an order to view details</h3><p class="mt-2">New orders will appear on the left.</p></div>
+                            <div id="details-content" class="hidden"></div>
+                        </div>
+                    </main>
+                </div>
+            </div>
+<div id="menu-page" class="hidden">
+            <div class="bg-white p-6 rounded-lg shadow-lg mb-6">
+                <h2 class="text-3xl font-bold border-b pb-4 mb-4">Manage Categories</h2>
+                <div id="category-list" class="space-y-2 mb-4">
+                </div>
+                <div class="flex space-x-2">
+                    <input type="text" id="new-category-name" placeholder="New category name..." class="w-full p-2 border rounded-md">
+                    <button id="add-new-category-btn" class="bg-green-500 text-white font-semibold py-2 px-4 rounded-lg hover:bg-green-600 whitespace-nowrap">
+                        + Add Category
+                    </button>
+                </div>
+            </div>
+            <div class="bg-white p-6 rounded-lg shadow-lg">
+                <div class="flex flex-col md:flex-row md:justify-between md:items-center border-b pb-4 mb-4">
+                    <h2 class="text-3xl font-bold">Menu Items</h2>
+                    <div class="w-full md:w-auto flex flex-col md:flex-row items-stretch md:items-center space-y-3 md:space-y-0 md:space-x-4 mt-4 md:mt-0">
+                        <select id="menu-item-filter" class="p-2 border rounded-md bg-gray-50 text-sm font-semibold">
+                            <option value="all">Filter by Category</option>
+                        </select>
+                        <button id="add-new-item-btn" class="bg-green-500 text-white font-semibold py-2 px-4 rounded-lg hover:bg-green-600 whitespace-nowrap">
+                            + Add New Item
+                        </button>
+                    </div>
+                </div>
+                <div id="menu-management-list" class="divide-y divide-gray-200">
+                    <p>Loading menu...</p>
+                </div>
+            </div>
+        </div> <!-- This is the proper end of menu-page -->
+        <div id="addons-page" class="hidden">
+            <div class="bg-white p-6 rounded-lg shadow-lg">
+                <div class="flex justify-between items-center border-b pb-4 mb-4">
+                    <h2 class="text-3xl font-bold">Manage Addons</h2>
+                    <button id="add-new-addon-btn" class="bg-green-500 text-white font-semibold py-2 px-4 rounded-lg hover:bg-green-600 whitespace-nowrap">
+                        + Add New Addon
+                    </button>
+                </div>
+                <div id="addon-list" class="divide-y divide-gray-200">
+                    <p>Loading addons...</p>
+                </div>
+            </div>
+        </div>
+    </div><div id="coupons-page" class="hidden">
+    <div class="bg-white p-6 rounded-lg shadow-lg">
+        <div class="flex justify-between items-center border-b pb-4 mb-4">
+            <h2 class="text-3xl font-bold">Manage Coupons</h2>
+            <button id="add-new-coupon-btn" class="bg-green-500 text-white font-semibold py-2 px-4 rounded-lg hover:bg-green-600 whitespace-nowrap">
+                + Add New Coupon
+            </button>
+        </div>
+        <div id="coupon-list" class="divide-y divide-gray-200">
+            <p>Loading coupons...</p>
+        </div>
+    </div>
+</div>
+
+<!-- ======================= COUPON MODAL ======================= -->
+<div id="coupon-modal" class="fixed inset-0 bg-gray-900 bg-opacity-75 hidden items-center justify-center z-[100] p-4">
+    <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+        <h2 id="coupon-modal-title" class="text-3xl font-bold mb-6">Add New Coupon</h2>
+        <form id="coupon-form" class="space-y-4">
+            <input type="hidden" id="coupon-id-input">
+            
+            <div>
+                <label for="coupon-code" class="block font-semibold">Coupon Code</label>
+                <input type="text" id="coupon-code" placeholder="e.g., PIXEL20" class="w-full p-2 border rounded-md" required>
+            </div>
+
+            <div>
+                <label for="coupon-discount" class="block font-semibold">Discount Percentage (%)</label>
+                <input type="number" id="coupon-discount" min="1" max="100" placeholder="e.g., 20" class="w-full p-2 border rounded-md" required>
+            </div>
+<div>
+    <label for="coupon-min-value" class="block font-semibold">Minimum Cart Value (Optional)</label>
+    <input type="number" id="coupon-min-value" min="0" placeholder="e.g., 1500 (Leave as 0 for no minimum)" class="w-full p-2 border rounded-md">
+</div>
+            <div class="flex items-center space-x-4 pt-4">
+                <label class="font-semibold">Is this coupon active?</label>
+                <input type="checkbox" id="coupon-active" class="h-5 w-5" checked>
+            </div>
+
+            <div class="flex justify-end space-x-4 pt-6">
+                <button type="button" id="cancel-coupon-btn" class="bg-gray-200 text-gray-700 font-semibold py-2 px-6 rounded-lg">Cancel</button>
+                <button type="submit" id="save-coupon-btn" class="bg-blue-600 text-white font-semibold py-2 px-6 rounded-lg">Save Coupon</button>
+            </div>
+        </form>
+    </div>
+</div>
+</div>
+<audio id="notification-sound" src="./notify.mp3" preload="auto"></audio>
+<div id="item-modal" class="fixed inset-0 bg-gray-900 bg-opacity-75 hidden items-center justify-center z-50 p-4">
+    <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+        <h2 id="modal-title" class="text-3xl font-bold mb-6">Add New Item</h2>
+        
+        <form id="item-form" class="space-y-4">
+            <!-- Hidden input to store the item ID when editing -->
+            <input type="hidden" id="item-id-input">
+
+            <div>
+                <label for="item-name" class="block font-semibold">Item Name</label>
+                <input type="text" id="item-name" class="w-full p-2 border rounded-md" required>
+            </div>
+            <div>
+                <label for="item-description" class="block font-semibold">Description</label>
+                <textarea id="item-description" rows="3" class="w-full p-2 border rounded-md"></textarea>
+            </div>
+            <div>
+                <label for="item-category" class="block font-semibold">Category</label>
+                <select id="item-category" class="w-full p-2 border rounded-md" required>
+                    <!-- Categories will be populated by JavaScript -->
+                </select>
+            </div>
+
+            <!-- This is the correctly integrated Image Uploader -->
+            <div>
+                <label class="block font-semibold">Item Image</label>
+                <div class="mt-2 flex items-center space-x-4">
+                    <img id="item-image-preview" src="https://via.placeholder.com/150" alt="Image preview" class="h-24 w-24 object-cover rounded-md bg-gray-200">
+                    <div class="flex-grow">
+                        <input type="hidden" id="item-image-url-hidden">
+                        <label for="item-image-file" class="cursor-pointer bg-white py-2 px-3 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50">
+                            <span>Change Image</span>
+                            <input id="item-image-file" name="item-image-file" type="file" class="sr-only" accept="image/png, image/jpeg">
+                        </label>
+                        <p id="file-name-display" class="mt-2 text-sm text-gray-500">No new file chosen.</p>
+                    </div>
+                </div>
+            </div>
+<div class="pt-4">
+                <h3 class="text-xl font-semibold mb-2">Pricing</h3>
+                <p class="text-sm text-gray-500 mb-4">Fill 'Regular Price' for normal items. For items with sizes (like pizza), leave 'Regular Price' empty and fill in the size prices below.</p>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label for="item-price" class="block font-semibold">Regular Price</label>
+                        <input type="number" id="item-price" placeholder="e.g., 550" class="w-full p-2 border rounded-md">
+                    </div>
+                    <div>
+                        <label for="item-original-price" class="block font-semibold">Original Price (for discounts)</label>
+                        <input type="number" id="item-original-price" placeholder="e.g., 650" class="w-full p-2 border rounded-md">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
+                    <div>
+                        <label for="price-small" class="block font-semibold">Price (Small)</label>
+                        <input type="number" id="price-small" class="w-full p-2 border rounded-md">
+                    </div>
+                     <div>
+                        <label for="price-medium" class="block font-semibold">Price (Medium)</label>
+                        <input type="number" id="price-medium" class="w-full p-2 border rounded-md">
+                    </div>
+                     <div>
+                        <label for="price-large" class="block font-semibold">Price (Large)</label>
+                        <input type="number" id="price-large" class="w-full p-2 border rounded-md">
+                    </div>
+                     <div>
+                        <label for="price-xl" class="block font-semibold">Price (XL)</label>
+                        <input type="number" id="price-xl" class="w-full p-2 border rounded-md">
+                    </div>
+                </div>
+            </div>
+            <div class="flex items-center space-x-4 pt-4">
+                <input type="checkbox" id="item-featured" class="h-5 w-5">
+                <label for="item-featured" class="font-semibold">Feature this item on the homepage?</label>
+            </div>
+<div id="addon-linking-section" class="pt-4">
+    <h3 class="text-xl font-semibold mb-2 border-t pt-4">Available Addon Categories</h3>
+    <p class="text-sm text-gray-500 mb-4">Select which groups of addons should be shown to the customer when they click this menu item.</p>
+    <div id="addon-categories-checkboxes" class="grid grid-cols-2 md:grid-cols-3 gap-4">
+        <p class="col-span-full text-gray-500">Loading addon categories...</p>
+    </div>
+</div>
+            <div class="flex justify-end space-x-4 pt-6">
+                <button type="button" id="cancel-item-btn" class="bg-gray-200 text-gray-700 font-semibold py-2 px-6 rounded-lg hover:bg-gray-300">Cancel</button>
+                <button type="submit" id="save-item-btn" class="bg-blue-600 text-white font-semibold py-2 px-6 rounded-lg hover:bg-blue-700">Save Item</button>
+            </div>
+        </form>
+    </div>
+</div>
+<div id="addon-modal" class="fixed inset-0 bg-gray-900 bg-opacity-75 hidden items-center justify-center z-[100] p-4">
+    <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+        <h2 id="addon-modal-title" class="text-3xl font-bold mb-6">Add New Addon</h2>
+        <form id="addon-form" class="space-y-4">
+            <input type="hidden" id="addon-id-input">
+            <div>
+                <label for="addon-name" class="block font-semibold">Addon Name</label>
+                <input type="text" id="addon-name" placeholder="e.g., Pepsi (Regular)" class="w-full p-2 border rounded-md" required>
+            </div>
+            <div>
+                <label for="addon-price" class="block font-semibold">Price</label>
+                <input type="number" id="addon-price" step="0.01" placeholder="e.g., 100" class="w-full p-2 border rounded-md" required>
+            </div>
+            <div>
+                <label for="addon-category" class="block font-semibold">Category</label>
+                <input type="text" id="addon-category" placeholder="e.g., Drinks or Dips" class="w-full p-2 border rounded-md" required>
+            </div>
+            <div class="flex justify-end space-x-4 pt-6">
+                <button type="button" id="cancel-addon-btn" class="bg-gray-200 text-gray-700 font-semibold py-2 px-6 rounded-lg">Cancel</button>
+                <button type="submit" id="save-addon-btn" class="bg-blue-600 text-white font-semibold py-2 px-6 rounded-lg">Save Addon</button>
+            </div>
+        </form>
+    </div>
+</div>
+<script> 
+document.addEventListener('DOMContentLoaded', () => {
+    // ========= 1. SETUP & CONFIGURATION =========
+    const SUPABASE_URL = 'https://fiuckqvkzcbbufueomff.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZpdWNrcXZremNiYnVmdWVvbWZmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgxOTM0ODAsImV4cCI6MjA3Mzc2OTQ4MH0.ETayy6vn87DyfkpdnNCoO5GCnR2a88H9aqD5aGdoCZ4';
+    const ADMIN_PASSWORD = '0000';
+    const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    // ========= 2. ELEMENT SELECTORS =========
+    const getEl = (id) => document.getElementById(id);
+    const queryAll = (selector) => document.querySelectorAll(selector);
+    const passwordPrompt = getEl('password-prompt');
+    const passwordInput = getEl('password-input');
+    const passwordSubmit = getEl('password-submit');
+    const adminPanel = getEl('admin-panel');
+    const ordersFeed = getEl('orders-feed');
+    const loadingOrders = getEl('loading-orders');
+    const notificationSound = getEl('notification-sound');
+    const noOrderSelected = getEl('no-order-selected');
+    const detailsContent = getEl('details-content');
+    const soundToggleButton = getEl('sound-toggle-btn');
+    const soundOnIcon = getEl('sound-on-icon');
+    const soundOffIcon = getEl('sound-off-icon');
+    const soundStatusText = getEl('sound-status-text');
+    const statNewOrders = getEl('stat-new-orders');
+    const statInProgress = getEl('stat-in-progress');
+    const statSalesToday = getEl('stat-sales-today');
+    const logoutBtn = getEl('logout-btn');
+    const navOrdersBtn = getEl('nav-orders-btn');
+    const navMenuBtn = getEl('nav-menu-btn');
+    const ordersPage = getEl('orders-page');
+    const menuPage = getEl('menu-page');
+    const menuManagementList = getEl('menu-management-list');
+    const addNewItemBtn = getEl('add-new-item-btn');
+    const itemModal = getEl('item-modal');
+    const itemForm = getEl('item-form');
+    const modalTitle = getEl('modal-title');
+    const cancelItemBtn = getEl('cancel-item-btn');
+    const itemIdInput = getEl('item-id-input');
+    const menuItemFilter = getEl('menu-item-filter');
+    const categoryList = getEl('category-list');
+const newCategoryNameInput = getEl('new-category-name');
+const addNewCategoryBtn = getEl('add-new-category-btn');
+const navAddonsBtn = getEl('nav-addons-btn');
+const addonsPage = getEl('addons-page');
+const addonList = getEl('addon-list');
+const addNewAddonBtn = getEl('add-new-addon-btn');
+const addonModal = getEl('addon-modal');
+const addonForm = getEl('addon-form');
+const addonModalTitle = getEl('addon-modal-title');
+const cancelAddonBtn = getEl('cancel-addon-btn');
+const addonIdInput = getEl('addon-id-input');
+const loginForm = getEl('login-form');
+const emailInput = getEl('email-input');
+const loginError = getEl('login-error');
+const navCouponsBtn = getEl('nav-coupons-btn');
+const statusToggleButton = getEl('status-toggle-btn');
+const statusText = getEl('status-text');
+const couponsPage = getEl('coupons-page');
+const couponList = getEl('coupon-list');
+const addNewCouponBtn = getEl('add-new-coupon-btn');
+const couponModal = getEl('coupon-modal');
+const couponForm = getEl('coupon-form');
+const couponModalTitle = getEl('coupon-modal-title');
+const cancelCouponBtn = getEl('cancel-coupon-btn');
+const couponIdInput = getEl('coupon-id-input');
+const couponMinValueInput = getEl('coupon-min-value');
+const statusToggleButtonMobile = getEl('status-toggle-btn-mobile');
+const statusTextMobile = getEl('status-text-mobile');
+const soundToggleButtonMobile = getEl('sound-toggle-btn-mobile');
+const logoutBtnMobile = getEl('logout-btn-mobile');
+const navOrdersBtnMobile = getEl('nav-orders-btn-mobile');
+const navMenuBtnMobile = getEl('nav-menu-btn-mobile');
+const navAddonsBtnMobile = getEl('nav-addons-btn-mobile');
+const navCouponsBtnMobile = getEl('nav-coupons-btn-mobile');
+const specialActiveToggle = getEl('special-active-toggle');
+const specialMessageInput = getEl('special-message-input');
+const saveSpecialBtn = getEl('save-special-btn');
+    // ========= 3. GLOBAL STATE =========
+    let allOrders = [];
+    let allMenuItems = [];
+    let soundEnabled = false;
+    let ordersChannel = null;
+    let activeFilter = 'active';
+    let activeMenuFilter = 'all';
+    let allAddons = [];
+    let allCoupons = [];
+    let currentRestaurantStatus = false;
+    let currentSpecial = { message: "", isActive: false };
+    // ========= 4. FUNCTION DEFINITIONS (DEFINED BEFORE USE) =========
+    // --- PASSWORD & INITIALIZATION ---
+    async function handleLogin(event) {
+    event.preventDefault(); // Prevent form from reloading the page
+    loginError.textContent = '';
+    const email = emailInput.value;
+    const password = passwordInput.value;
+    const { data, error } = await db.auth.signInWithPassword({
+        email: email,
+        password: password,
+    });
+
+    if (error) {
+        console.error("Login failed:", error.message);
+        loginError.textContent = 'Invalid login credentials.';
+    } else {
+        console.log("Login successful!", data.user);
+        // Supabase now automatically handles the session token.
+        passwordPrompt.style.display = 'none';
+        adminPanel.classList.remove('hidden');
+        initializeApp();
+    }
+}
+async function handleDeleteMenuItem(itemId) {
+    if (!confirm("Are you sure you want to permanently delete this menu item? This cannot be undone.")) {
+        return;
+    }
+    const numericItemId = Number(itemId);
+    const { error } = await db.from('menu_items').delete().eq('id', numericItemId);
+    if (error) {
+        showToastNotification(`Failed to delete item: ${error.message}`, 'error');
+        console.error("Delete item error:", error);
+    } else {
+        showToastNotification('Menu item deleted successfully!', 'success');
+                allMenuItems = allMenuItems.filter(item => item.id !== numericItemId);
+                renderMenuList();
+    }
+}
+async function fetchAndDisplayCoupons() {
+    couponList.innerHTML = '<p>Loading coupons...</p>';
+    const { data, error } = await db.from('coupons').select('*').order('created_at', { ascending: false });
+    if (error) {
+        couponList.innerHTML = '<p class="text-red-500">Could not load coupons.</p>';
+        console.error("Error fetching coupons:", error);
+        return;
+    }
+    allCoupons = data;
+    renderCouponList();
+}
+function renderCouponList() {
+    if (allCoupons.length === 0) {
+        couponList.innerHTML = '<p class="text-center text-gray-500 py-4">No coupons created yet. Click "+ Add New Coupon" to start.</p>';
+        return;
+    }
+    couponList.innerHTML = allCoupons.map(coupon => {const conditionText = coupon.min_cart_value > 0 
+            ? ` | Min. Spend: <span class="font-semibold">PKR ${coupon.min_cart_value}</span>` 
+            : '';
+        return `
+            <div class="flex items-center justify-between py-4">
+                <div>
+                    <p class="font-bold text-lg">${coupon.code}</p>
+                    <p class="text-sm text-gray-500">Discount: <span class="font-semibold">${coupon.discount_percent}%</span> | Status: <span class="font-semibold">${coupon.is_active ? 'Active' : 'Inactive'}</span>${conditionText}</p>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button data-id="${coupon.id}" class="edit-coupon-btn text-blue-500 hover:text-blue-700">Edit</button>
+                    <button data-id="${coupon.id}" class="delete-coupon-btn text-red-500 hover:text-red-700">Delete</button>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+function openCouponModal(couponId = null) {
+    couponForm.reset();
+    couponIdInput.value = '';
+    
+    if (couponId) {
+        couponModalTitle.textContent = 'Edit Coupon';
+        const couponToEdit = allCoupons.find(c => c.id == couponId);
+        if (!couponToEdit) {
+            showToastNotification('Coupon not found!', 'error');
+            return;
+        }
+        couponIdInput.value = couponToEdit.id;
+        getEl('coupon-code').value = couponToEdit.code;
+        getEl('coupon-discount').value = couponToEdit.discount_percent;
+        getEl('coupon-active').checked = couponToEdit.is_active;
+                getEl('coupon-min-value').value = couponToEdit.min_cart_value;
+    } else {
+        couponModalTitle.textContent = 'Add New Coupon';
+    }
+    couponModal.classList.replace('hidden', 'flex');
+}
+async function handleSaveCoupon(event) {
+    event.preventDefault();
+    const couponId = couponIdInput.value;
+    const couponData = {
+        code: getEl('coupon-code').value.toUpperCase().trim(),
+        discount_percent: getEl('coupon-discount').value,
+        is_active: getEl('coupon-active').checked,
+                min_cart_value: getEl('coupon-min-value').value || 0 
+    };
+
+    let result;
+    if (couponId) {
+        result = await db.from('coupons').update(couponData).eq('id', couponId).select();
+    } else {
+        result = await db.from('coupons').insert(couponData).select();
+    }
+
+    if (result.error) {
+        showToastNotification(`Error: ${result.error.message}`, 'error');
+        console.error("Error saving coupon:", result.error);
+    } else {
+        couponModal.classList.replace('flex', 'hidden');
+        showToastNotification(couponId ? "Coupon updated!" : "Coupon added!", 'success');
+        await fetchAndDisplayCoupons(); // Simple refresh
+    }
+}
+async function handleDeleteCoupon(couponId) {
+    if (!confirm("Are you sure you want to delete this coupon? This cannot be undone.")) return;
+    
+    const { error } = await db.from('coupons').delete().eq('id', couponId);
+    if (error) {
+        showToastNotification(`Error: ${error.message}`, 'error');
+    } else {
+        showToastNotification('Coupon deleted.', 'success');
+        allCoupons = allCoupons.filter(c => c.id != couponId);
+        renderCouponList();
+    }
+}
+    async function populateMenuFilter() {
+    if (!menuItemFilter) return;
+    const { data: categories, error } = await db.from('categories').select('*').order('name');
+    if (error) { console.error("Could not load categories for filter"); return; }
+
+    menuItemFilter.innerHTML = '<option value="all">All Categories</option>';
+    categories.forEach(cat => {
+        const categorySlug = cat.name.toLowerCase().replace(/\s+/g, '-');
+        menuItemFilter.innerHTML += `<option value="${categorySlug}">${cat.name}</option>`;
+    });
+}
+    // --- CORE FUNCTIONS ---
+    async function initializeApp() {
+        await fetchAndSetInitialStatus();
+        await fetchAndSetInitialSpecial();
+        setupEventListeners();
+        console.log("Admin Panel Initialized.");
+        await fetchInitialOrders();
+        listenForNewOrders();
+        updateDashboardStats();
+        populateMenuFilter();
+        
+    }
+    async function handleLogout() {
+    if (logoutBtn) logoutBtn.disabled = true;
+    if (logoutBtnMobile) logoutBtnMobile.disabled = true;
+    const { error } = await db.auth.signOut();
+
+    if (error) {
+        alert("Logout failed. Please try again.");
+        console.error("Logout error:", error);
+        if (logoutBtn) logoutBtn.disabled = false;
+        if (logoutBtnMobile) logoutBtnMobile.disabled = false;
+    } else {
+        location.reload();
+    }
+}
+async function fetchAndSetInitialSpecial() {
+    const { data, error } = await db
+        .from('settings')
+        .select('value')
+        .eq('key', 'daily_special')
+        .single();
+        
+    if (data && !error) {
+        currentSpecial = data.value;
+        specialMessageInput.value = currentSpecial.message;
+        specialActiveToggle.checked = currentSpecial.isActive;
+    }
+}
+    async function handleRestaurantStatusToggle() {
+    if (statusToggleButton) statusToggleButton.disabled = true;
+    if (statusToggleButtonMobile) statusToggleButtonMobile.disabled = true;
+    const newStatus = !currentRestaurantStatus;
+    const { error } = await db
+        .from('settings')
+        .update({ value: { isOpen: newStatus } })
+        .eq('key', 'restaurant_status');
+
+    if (error) {
+        alert("Failed to update status.");
+        console.error("Status update error:", error);
+    } else {
+        currentRestaurantStatus = newStatus;
+        updateStatusButtonUI();
+        showToastNotification(`Restaurant is now ${newStatus ? 'OPEN' : 'CLOSED'}`);
+    }
+    if (statusToggleButton) statusToggleButton.disabled = false;
+    if (statusToggleButtonMobile) statusToggleButtonMobile.disabled = false;
+}
+    async function fetchAndDisplayAddons() {
+    addonList.innerHTML = '<p>Loading addons...</p>';
+    const { data, error } = await db.from('add_ons').select('*').order('category').order('name');
+    if (error) {
+        addonList.innerHTML = '<p class="text-red-500">Could not load addons.</p>';
+        console.error("Error fetching addons:", error);
+        return;
+    }
+    allAddons = data;
+    renderAddonList();
+}
+function renderAddonList() {
+    if (allAddons.length === 0) {
+        addonList.innerHTML = '<p class="text-center text-gray-500 py-4">No addons created yet. Click "+ Add New Addon" to start.</p>';
+        return;
+    }
+    addonList.innerHTML = allAddons.map(addon => `
+        <div class="flex items-center justify-between py-4">
+            <div>
+                <p class="font-bold">${addon.name}</p>
+                <p class="text-sm text-gray-500">Category: <span class="font-semibold">${addon.category}</span> | Price: <span class="font-semibold">PKR ${addon.price}</span></p>
+            </div>
+            <div class="flex items-center space-x-4">
+                <button data-id="${addon.id}" class="edit-addon-btn text-blue-500 hover:text-blue-700">Edit</button>
+                <button data-id="${addon.id}" class="delete-addon-btn text-red-500 hover:text-red-700">Delete</button>
+            </div>
+        </div>
+    `).join('');
+}
+function openAddonModal(addonId = null) {
+    addonForm.reset();
+    addonIdInput.value = '';
+    
+    if (addonId) {
+        const numericAddonId = Number(addonId); // Convert string from dataset to number
+        addonModalTitle.textContent = 'Edit Addon';
+                const addonToEdit = allAddons.find(addon => addon.id === numericAddonId);
+
+        if (!addonToEdit) {
+            showToastNotification('Addon not found!', 'error');
+            return;
+        }
+        addonIdInput.value = addonToEdit.id;
+        getEl('addon-name').value = addonToEdit.name;
+        getEl('addon-price').value = addonToEdit.price;
+        getEl('addon-category').value = addonToEdit.category;
+    } else {
+        addonModalTitle.textContent = 'Add New Addon';
+    }
+    addonModal.classList.replace('hidden', 'flex');
+}
+async function handleSaveAddon(event) {
+    event.preventDefault();
+    const saveButton = getEl('save-addon-btn');
+    saveButton.textContent = 'Saving...';
+    saveButton.disabled = true;
+
+    const addonId = addonIdInput.value; // This is a string from the input field
+    const addonData = {
+        name: getEl('addon-name').value,
+        price: getEl('addon-price').value,
+        category: getEl('addon-category').value.trim(),
+    };
+
+    let result;
+
+    if (addonId) {
+        result = await db.from('add_ons').update(addonData).eq('id', Number(addonId)).select();
+    } else {
+        // INSERT
+        result = await db.from('add_ons').insert(addonData).select();
+    }
+
+    if (result.error || !result.data || result.data.length === 0) {
+        const errorMessage = result.error ? result.error.message : 'Data could not be saved. Please check RLS policies and refresh.';
+        showToastNotification(errorMessage, 'error');
+        console.error("Error saving addon:", result.error || "No data was returned from Supabase.");
+    } else {
+        addonModal.classList.replace('flex', 'hidden');
+        const savedAddon = result.data[0]; 
+
+        if (addonId) {
+            const index = allAddons.findIndex(a => a.id == savedAddon.id);
+            if (index !== -1) allAddons[index] = savedAddon;
+            showToastNotification("Addon updated successfully!", 'success');
+        } else {
+            allAddons.unshift(savedAddon);
+            showToastNotification("New addon added successfully!", 'success');
+        }
+        renderAddonList();
+    }
+    
+    saveButton.textContent = 'Save Addon';
+    saveButton.disabled = false;
+}
+async function handleDeleteAddon(addonId) { // addonId is a string from the dataset
+    if (!confirm("Are you sure you want to delete this addon? This cannot be undone.")) {
+        return;
+    }
+
+    const numericAddonId = Number(addonId); // Convert to number
+
+    // Use the number in the .eq() query
+    const { error } = await db.from('add_ons').delete().eq('id', numericAddonId);
+
+    if (error) {
+        showToastNotification(`Failed to delete addon: ${error.message}`, 'error');
+    } else {
+        showToastNotification('Addon deleted successfully!', 'success');
+        // Filter the local array using the number
+        allAddons = allAddons.filter(addon => addon.id !== numericAddonId);
+        renderAddonList();
+    }
+}
+    // --- DATA & REAL-TIME FUNCTIONS ---
+    async function fetchInitialOrders() {
+        const { data, error } = await db.from('orders').select('*').order('created_at', { ascending: false });
+        if (error) { console.error("Error fetching orders:", error); loadingOrders.textContent = 'Could not fetch orders.'; return; }
+        ordersFeed.innerHTML = '';
+        if (data.length === 0) {
+            ordersFeed.innerHTML = '<p class="text-gray-500">No orders found yet.</p>';
+        } else {
+            allOrders = data;
+            allOrders.forEach(order => {
+                const orderCard = renderOrderCard(order);
+                ordersFeed.appendChild(orderCard);
+            });
+        }
+        filterOrders();
+    }
+async function fetchAndSetInitialStatus() {
+    if (!statusToggleButton) return;
+
+    const { data, error } = await db
+        .from('settings')
+        .select('value')
+        .eq('key', 'restaurant_status')
+        .single();
+
+    if (error || !data) {
+        console.error("Could not fetch restaurant status.", error);
+        currentRestaurantStatus = false; 
+    } else {
+        currentRestaurantStatus = data.value.isOpen;
+    }
+    updateStatusButtonUI();
+}
+function updateStatusButtonUI() {
+    if (currentRestaurantStatus) {
+        // Update desktop button
+        if (statusText) statusText.textContent = 'Restaurant Open';
+        if (statusToggleButton) statusToggleButton.classList.replace('bg-red-500', 'bg-green-500');
+        // Update mobile button
+        if (statusTextMobile) statusTextMobile.textContent = 'Open';
+        if (statusToggleButtonMobile) statusToggleButtonMobile.classList.replace('bg-red-500', 'bg-green-500');
+    } else {
+        // Update desktop button
+        if (statusText) statusText.textContent = 'Restaurant Closed';
+        if (statusToggleButton) statusToggleButton.classList.replace('bg-green-500', 'bg-red-500');
+        // Update mobile button
+        if (statusTextMobile) statusTextMobile.textContent = 'Closed';
+        if (statusToggleButtonMobile) statusToggleButtonMobile.classList.replace('bg-green-500', 'bg-red-500');
+    }
+}
+
+async function fetchAndDisplayCategories() {
+    categoryList.innerHTML = '<p>Loading categories...</p>';
+    const { data, error } = await db.from('categories').select('*').order('display_order');
+    if (error) { /* handle error */ return; }
+    categoryList.innerHTML = data.map(cat => `
+        <div class="flex justify-between items-center p-2 rounded-md hover:bg-gray-100">
+            <span class="font-semibold">${cat.name}</span>
+            <button data-id="${cat.id}" class="delete-category-btn text-red-500 hover:text-red-700">
+                <i class="fas fa-trash"></i>
+            </button>
+        </div>
+    `).join('');
+}
+async function handleAddNewCategory() {
+    const newName = newCategoryNameInput.value.trim();
+    if (!newName) {
+        alert("Please enter a category name.");
+        return;
+    }
+    const { count } = await db.from('categories').select('*', { count: 'exact', head: true });
+
+    const { error } = await db.from('categories').insert([{ name: newName, display_order: (count || 0) + 1 }]);
+    if (error) {
+        alert(`Failed to add category: ${error.message}`);
+    } else {
+        newCategoryNameInput.value = ''; // Clear the input
+        await fetchAndDisplayCategories(); // Refresh the list
+    }
+}
+async function handleDeleteCategory(categoryId) {
+    if (!confirm("Are you sure you want to delete this category? This cannot be undone.")) {
+        return;
+    }
+    const { error } = await db.from('categories').delete().eq('id', categoryId);
+    if (error) {
+        alert(`Failed to delete category: ${error.message}`);
+    } else {
+        await fetchAndDisplayCategories(); // Refresh the list
+    }
+}
+    function listenForNewOrders() {
+        const allSubscriptions = db.getChannels();
+        if (allSubscriptions.length > 0) { db.removeChannel(...allSubscriptions); }
+        ordersChannel = db.channel('public:orders')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, (payload) => {
+                if (payload.eventType === 'INSERT') {
+                    if (soundEnabled) { notificationSound.play().catch(e => console.error("Audio playback failed:", e)); }
+                    const newOrder = payload.new;
+                    allOrders.unshift(newOrder);
+                    const newOrderCard = renderOrderCard(newOrder);
+                    newOrderCard.classList.add('new-order-animation', 'bg-green-100');
+                    const newTag = document.createElement('span');
+                    newTag.className = 'bg-green-500 text-white text-xs font-bold px-2 py-1 rounded-full ml-2';
+                    newTag.textContent = 'NEW';
+                    newOrderCard.querySelector('h3').appendChild(newTag);
+                    ordersFeed.insertBefore(newOrderCard, ordersFeed.firstChild);
+                    setTimeout(() => { newOrderCard.classList.remove('bg-green-100'); }, 15000);
+                }
+                if (payload.eventType === 'UPDATE') {
+                    const updatedOrder = payload.new;
+                    const orderIndex = allOrders.findIndex(o => o.id === updatedOrder.id);
+                    if (orderIndex > -1) { allOrders[orderIndex] = updatedOrder; }
+                    const cardToUpdate = ordersFeed.querySelector(`[data-order-id="${updatedOrder.id}"]`);
+                    if (cardToUpdate) {
+                        cardToUpdate.classList.remove('status-pending', 'status-preparing', 'status-completed');
+                        cardToUpdate.classList.add(`status-${updatedOrder.status.toLowerCase()}`);
+                    }
+                    const selectedView = detailsContent.querySelector('h2');
+                    if (selectedView && selectedView.textContent === `Order #${updatedOrder.id}`) {
+                        showOrderDetails(updatedOrder);
+                    }
+                }
+                filterOrders();
+                updateDashboardStats();
+            })
+            .subscribe();
+    }
+async function submitItemFormData() {
+    const itemId = itemIdInput.value;
+    const itemData = {
+        name: getEl('item-name').value, description: getEl('item-description').value, category: getEl('item-category').value,
+        image_url: getEl('item-image-url').value, price: getEl('item-price').value || null, original_price: getEl('item-original-price').value || null,
+        price_small: getEl('price-small').value || null, price_medium: getEl('price-medium').value || null, price_large: getEl('price-large').value || null,
+        price_xl: getEl('price-xl').value || null, is_featured: getEl('item-featured').checked,
+    };
+    
+    let result;
+    if (itemId) {
+        result = await db.from('menu_items').update(itemData).eq('id', itemId);
+    } else {
+        result = await db.from('menu_items').insert([itemData]);
+    }
+
+    if (result.error) {
+        console.error("Error saving item:", result.error);
+        alert(`Failed to save item: ${result.error.message}`);
+    } else {
+        itemModal.classList.replace('flex', 'hidden');
+        await fetchAndDisplayMenu();
+    }
+}
+async function fetchAndDisplayMenu() {
+    menuManagementList.innerHTML = '<p>Loading menu...</p>';
+    const { data, error } = await db.from('menu_items').select('*').order('category').order('name');
+    if (error) {
+        menuManagementList.innerHTML = '<p class="text-red-500">Could not load menu.</p>';
+        return;
+    }
+    allMenuItems = data;
+    renderMenuList();
+}
+    async function openItemModal(itemId = null) {
+    itemForm.reset();
+    itemIdInput.value = '';
+    const imagePreview = getEl('item-image-preview');
+    const fileInput = getEl('item-image-file');
+    const fileNameDisplay = getEl('file-name-display');
+    const hiddenImageUrl = getEl('item-image-url-hidden');
+    imagePreview.src = 'https://via.placeholder.com/150';
+    fileInput.value = '';
+    fileNameDisplay.textContent = 'No new file chosen.';
+    hiddenImageUrl.value = '';
+    const categorySelect = getEl('item-category');
+    const addonCheckboxContainer = getEl('addon-categories-checkboxes');
+        const { data: categories, error: catError } = await db.from('categories').select('name');
+    if (categories) {
+        categorySelect.innerHTML = categories.map(cat => `<option value="${cat.name}">${cat.name}</option>`).join('');
+    }
+    addonCheckboxContainer.innerHTML = '<p class="col-span-full text-gray-500">Loading...</p>';
+    const { data: addons, error: addonError } = await db.from('add_ons').select('category');
+    if (addons) {
+        const uniqueAddonCategories = [...new Set(addons.map(a => a.category))];
+        if (uniqueAddonCategories.length > 0) {
+            addonCheckboxContainer.innerHTML = uniqueAddonCategories.map(catName => `
+                <div class="flex items-center">
+                    <input id="addon-cat-${catName}" type="checkbox" value="${catName}" name="addonCategories" class="h-4 w-4 text-blue-600 border-gray-300 rounded">
+                    <label for="addon-cat-${catName}" class="ml-2 block text-sm text-gray-900">${catName}</label>
+                </div>
+            `).join('');
+        } else {
+            addonCheckboxContainer.innerHTML = '<p class="col-span-full text-gray-500">No addon categories found.</p>';
+        }
+    }
+    if (itemId) {
+        modalTitle.textContent = 'Edit Menu Item';
+        const itemToEdit = allMenuItems.find(item => item.id == itemId);
+                console.log("Found item to edit:", itemToEdit);
+
+        if (!itemToEdit) { 
+            alert("Error: Could not find the item to edit. The list might be out of date."); 
+            return; 
+        }
+        itemIdInput.value = itemToEdit.id;
+        getEl('item-name').value = itemToEdit.name || '';
+        getEl('item-description').value = itemToEdit.description || '';
+        getEl('item-category').value = itemToEdit.category || '';
+        if (itemToEdit.image_url) {
+            imagePreview.src = itemToEdit.image_url;
+            hiddenImageUrl.value = itemToEdit.image_url;
+        }
+        getEl('item-price').value = itemToEdit.price || '';
+        getEl('item-original-price').value = itemToEdit.original_price || '';
+        getEl('price-small').value = itemToEdit.price_small || '';
+        getEl('price-medium').value = itemToEdit.price_medium || '';
+        getEl('price-large').value = itemToEdit.price_large || '';
+        getEl('price-xl').value = itemToEdit.price_xl || '';
+        getEl('item-featured').checked = itemToEdit.is_featured || false;
+        if (itemToEdit.addon_categories && Array.isArray(itemToEdit.addon_categories)) {
+            itemToEdit.addon_categories.forEach(savedCat => {
+                const checkbox = addonCheckboxContainer.querySelector(`input[value="${savedCat}"]`);
+                if (checkbox) checkbox.checked = true;
+            });
+        }
+    } else {
+        modalTitle.textContent = 'Add New Item';
+    }
+    itemModal.classList.replace('hidden', 'flex');
+}
+async function handleAvailabilityToggle(toggle) { // Now accepts the element directly
+    const itemId = toggle.dataset.id;
+    const isAvailable = toggle.checked;
+    toggle.disabled = true;
+    const { error } = await db.from('menu_items').update({ is_available: isAvailable }).eq('id', itemId);
+    if (error) {
+        alert("Could not update item availability.");
+        toggle.checked = !isAvailable;
+    } else {
+        showToastNotification("Availability updated!", 'success');
+    }
+    toggle.disabled = false;
+}
+async function handleFormSubmit(event) {
+    event.preventDefault();
+    const saveButton = getEl('save-item-btn');
+    saveButton.textContent = 'Saving...';
+    saveButton.disabled = true;
+    const fileInput = getEl('item-image-file');
+    const hiddenImageUrl = getEl('item-image-url-hidden');
+    let finalImageUrl = hiddenImageUrl.value; // Start with the existing URL
+
+    try {
+        if (fileInput.files && fileInput.files.length > 0) {
+            const file = fileInput.files[0];
+            const fileName = `${Date.now()}-${file.name}`;
+            saveButton.textContent = 'Uploading Image...';
+            const { data: uploadData, error: uploadError } = await db.storage
+                .from('menu-images')
+                .upload(fileName, file);
+
+            if (uploadError) throw new Error(`Image upload failed: ${uploadError.message}`);
+            
+            const { data: urlData } = db.storage
+                .from('menu-images')
+                .getPublicUrl(fileName);
+            finalImageUrl = urlData.publicUrl;
+        }
+        saveButton.textContent = 'Saving Item Data...';
+        const selectedAddonCheckboxes = document.querySelectorAll('#addon-categories-checkboxes input:checked');
+        const selectedAddonCategories = Array.from(selectedAddonCheckboxes).map(cb => cb.value);
+        const itemId = itemIdInput.value;
+
+        const itemData = {
+            name: getEl('item-name').value,
+            description: getEl('item-description').value,
+            category: getEl('item-category').value,
+            image_url: finalImageUrl,
+            price: getEl('item-price').value || null,
+            original_price: getEl('item-original-price').value || null,
+            price_small: getEl('price-small').value || null,
+            price_medium: getEl('price-medium').value || null,
+            price_large: getEl('price-large').value || null,
+            price_xl: getEl('price-xl').value || null,
+            is_featured: getEl('item-featured').checked,
+            addon_categories: selectedAddonCategories
+        };
+        let result;
+        if (itemId) {
+            result = await db.from('menu_items').update(itemData).eq('id', itemId).select();
+        } else {
+            result = await db.from('menu_items').insert([itemData]).select();
+        }
+
+        if (result.error) throw new Error(result.error.message);
+        itemModal.classList.replace('flex', 'hidden');
+        showToastNotification(itemId ? "Item updated successfully!" : "New item added successfully!", 'success');
+        await fetchAndDisplayMenu();
+
+    } catch (error) {
+        console.error("Error during form submission:", error);
+        showToastNotification(`Error: ${error.message}`, 'error');
+    } finally {
+        saveButton.textContent = 'Save Item';
+        saveButton.disabled = false;
+    }
+}
+    async function updateDashboardStats() {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const todayISO = today.toISOString();
+        const { data: todaysOrders, error } = await db.from('orders').select('status, total_price').gte('created_at', todayISO);
+        if (error) { console.error("Error fetching dashboard data:", error); return; }
+        let newOrdersCount = 0;
+        let inProgressCount = 0;
+        let totalSales = 0;
+        todaysOrders.forEach(order => {
+            if (order.status === 'Pending') newOrdersCount++;
+            if (order.status === 'Preparing') inProgressCount++;
+            totalSales += order.total_price;
+        });
+        statNewOrders.textContent = newOrdersCount;
+        statInProgress.textContent = inProgressCount;
+        statSalesToday.textContent = `PKR ${totalSales.toFixed(2)}`;
+    }async function submitItemFormData() {
+    const itemId = itemIdInput.value;
+    const itemData = { /* ... your itemData object ... */ };
+    
+    let result;
+    if (itemId) {
+        result = await db.from('menu_items').update(itemData).eq('id', itemId);
+    } else {
+        result = await db.from('menu_items').insert([itemData]);
+    }
+
+    if (result.error) {
+        console.error("Error saving item:", result.error);
+        alert(`Failed to save item: ${result.error.message}`);
+    } else {
+        itemModal.classList.replace('flex', 'hidden');
+        const message = itemId ? "Item updated successfully!" : "New item added successfully!";
+        alert(message); // Use a simple alert for confirmation
+        await fetchAndDisplayMenu();
+    }
+}
+    // --- UI RENDERING FUNCTIONS ---
+function showToastNotification(message, type = 'success') {
+    const div = document.createElement('div');
+    const isError = type === 'error';
+    const bgColor = isError ? 'bg-red-600' : 'bg-green-600';
+    const icon = isError 
+        ? `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>`
+        : `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>`;
+        
+    div.className = `fixed bottom-5 right-5 ${bgColor} text-white px-5 py-3 rounded-lg shadow-xl flex items-center space-x-3 opacity-0 transition-all duration-500 transform translate-y-3 z-[150]`;
+    div.innerHTML = `${icon}<span>${message}</span>`;
+    
+    document.body.appendChild(div);
+    setTimeout(() => { 
+        div.style.opacity = '1'; 
+        div.style.transform = 'translateY(0)'; 
+    }, 10);
+        setTimeout(() => { 
+        div.style.opacity = '0'; 
+        div.style.transform = 'translateY(3px)'; 
+        setTimeout(() => div.remove(), 500); 
+    }, 3000);
+}
+    function renderOrderCard(order) {
+        const orderDate = new Date(order.created_at);
+        const time = orderDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        const card = document.createElement('div');
+        card.className = `order-card status-${order.status.toLowerCase()} p-4 rounded-lg shadow cursor-pointer border-l-4`;
+        card.dataset.orderId = order.id;
+        card.innerHTML = `<div class="flex justify-between items-center"><h3 class="font-bold text-lg">Order #${order.id}</h3><span class="text-sm font-semibold">${time}</span></div><p class="text-gray-600">${order.customer_details.name}</p><p class="text-gray-800 font-bold mt-2">PKR ${order.total_price.toFixed(2)}</p>`;
+        card.addEventListener('click', () => {
+            const clickedOrder = allOrders.find(o => o.id === order.id);
+            if (clickedOrder) {
+                showOrderDetails(clickedOrder);
+                document.querySelectorAll('.order-card.selected').forEach(c => c.classList.remove('selected'));
+                card.classList.add('selected');
+            }
+        });
+        return card;
+    }
+    function renderMenuList() {
+    menuManagementList.innerHTML = '';
+        const filteredItems = allMenuItems.filter(item => {
+        if (activeMenuFilter === 'all') {
+            return true; // Show all items
+        }
+        const itemCategorySlug = item.category ? item.category.toLowerCase().replace(/\s+/g, '-') : '';
+        return itemCategorySlug === activeMenuFilter;
+    });
+
+    if (filteredItems.length === 0) {
+        menuManagementList.innerHTML = '<p class="text-center text-gray-500 py-4">No items found for this filter.</p>';
+    } else {
+        filteredItems.forEach(item => {
+            const itemDiv = document.createElement('div');
+            itemDiv.className = 'flex items-center justify-between py-4';
+            const isChecked = item.is_available ? 'checked' : '';
+            // The rest of your rendering code for the item...
+            itemDiv.innerHTML = `<div class="flex items-center"><img src="${item.image_url}" alt="${item.name}" class="h-12 w-12 object-cover rounded-md mr-4"><div><p class="font-bold">${item.name}</p><p class="text-sm text-gray-500">${item.category}</p></div></div>
+    <div class="flex items-center space-x-4">
+        <label class="flex items-center cursor-pointer">
+            <div class="relative">
+                <input type="checkbox" data-id="${item.id}" class="sr-only availability-toggle" ${item.is_available ? 'checked' : ''}>
+                <div class="block bg-gray-600 w-14 h-8 rounded-full"></div>
+                <div class="dot absolute left-1 top-1 bg-white w-6 h-6 rounded-full transition"></div>
+            </div>
+        </label>
+        <button data-id="${item.id}" class="edit-item-btn text-blue-500 hover:text-blue-700 font-semibold">Edit</button>
+        <button data-id="${item.id}" class="delete-item-btn text-red-500 hover:text-red-700 px-2 py-1 rounded-md hover:bg-red-100 transition-colors" title="Delete Item">
+    <i class="fas fa-trash-alt"></i>
+</button>
+    </div>`;
+            menuManagementList.appendChild(itemDiv);
+        });
+    }
+}
+function filterOrders() {
+        const orderCards = document.querySelectorAll('.order-card');
+    orderCards.forEach(card => {
+        const orderId = Number(card.dataset.orderId);
+        const order = allOrders.find(o => o.id === orderId);
+        if (!order) return;
+        if (activeFilter === 'active') {
+            if (order.status === 'Pending' || order.status === 'Preparing') {
+                card.style.display = 'block';
+            } else {
+                card.style.display = 'none'; // Hide completed orders
+            }
+        } else {
+            if (order.status === activeFilter) {
+                card.style.display = 'block';
+            } else {
+                card.style.display = 'none';
+            }
+        }
+    });
+        const filterButtons = document.querySelectorAll('.filter-btn');
+    filterButtons.forEach(button => {
+        if (button.dataset.status === activeFilter) {
+            button.classList.remove('bg-gray-200', 'text-gray-700');
+            button.classList.add('bg-blue-600', 'text-white');
+        } else {
+            button.classList.remove('bg-blue-600', 'text-white');
+            button.classList.add('bg-gray-200', 'text-gray-700');
+        }
+    });
+}
+function showPage(pageName) {
+    // --- Step 1: Hide ALL page containers ---
+    ordersPage.classList.add('hidden');
+    menuPage.classList.add('hidden');
+    addonsPage.classList.add('hidden');
+    couponsPage.classList.add('hidden');
+
+    // --- Step 2: RESET ALL navigation buttons to their INACTIVE state ---
+    const allNavButtons = document.querySelectorAll('.nav-btn, .nav-btn-mobile');
+    allNavButtons.forEach(btn => {
+        btn.classList.remove('active', 'bg-white', 'text-blue-600', 'shadow');
+        // This is the crucial addition:
+        btn.classList.add('text-gray-500'); 
+    });
+    
+    // --- Step 3: Determine which elements to make ACTIVE ---
+    let pageToShow, desktopButton, mobileButton;
+
+    if (pageName === 'orders') {
+        pageToShow = ordersPage;
+        desktopButton = navOrdersBtn;
+        mobileButton = navOrdersBtnMobile;
+    } 
+    else if (pageName === 'menu') {
+        pageToShow = menuPage;
+        desktopButton = navMenuBtn;
+        mobileButton = navMenuBtnMobile;
+        if (menuManagementList.children.length <= 1) {
+            fetchAndDisplayMenu();
+            fetchAndDisplayCategories();
+        }
+    } else if (pageName === 'addons') {
+        pageToShow = addonsPage;
+        desktopButton = navAddonsBtn;
+        mobileButton = navAddonsBtnMobile;
+        if (allAddons.length === 0) { fetchAndDisplayAddons(); }
+    } 
+    else if (pageName === 'coupons') {
+        pageToShow = couponsPage;
+        desktopButton = navCouponsBtn;
+        mobileButton = navCouponsBtnMobile;
+        if (allCoupons.length === 0) { fetchAndDisplayCoupons(); }
+    }
+    if (pageToShow) {
+        pageToShow.classList.remove('hidden');
+    }
+    if (desktopButton) {
+        desktopButton.classList.remove('text-gray-500');
+        desktopButton.classList.add('active', 'bg-white', 'text-blue-600', 'shadow');
+    }
+    if (mobileButton) {
+        mobileButton.classList.remove('text-gray-500');
+        mobileButton.classList.add('active', 'bg-white', 'text-blue-600', 'shadow');
+    }
+}
+    function showOrderDetails(order) {
+    noOrderSelected.style.display = 'none';
+    detailsContent.classList.remove('hidden');
+        const { customer_details: customer, items, total_price, status, id, applied_coupon, discount_percent } = order;
+    let subtotal = 0;
+    if (discount_percent) {
+        subtotal = total_price / (1 - (discount_percent / 100));
+    } else {
+        subtotal = total_price;
+    }
+    const discountAmount = subtotal - total_price;
+    let discountHTML = '';
+    if (applied_coupon && discount_percent) {
+        discountHTML = `
+            <div class="flex justify-between font-semibold text-lg text-green-600 mt-2 pt-2 border-t">
+                <span>Discount (${applied_coupon} - ${discount_percent}%):</span>
+                <span>- PKR ${discountAmount.toFixed(2)}</span>
+            </div>
+        `;
+    }
+
+    detailsContent.innerHTML = `
+        <div class="border-b pb-4 mb-6 flex justify-between items-start">
+            <div>
+                <h2 class="text-3xl font-bold">Order #${id}</h2>
+                <p class="text-gray-500">Status: <span class="font-semibold text-black">${status}</span></p>
+            </div>
+            <button id="print-ticket-btn" class="bg-gray-700 text-white font-semibold py-2 px-4 rounded-lg hover:bg-gray-800 flex items-center space-x-2 transition">
+                <svg xmlns="http://www.w.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5 4v3H4a2 2 0 00-2 2v3a2 2 0 002 2h1v3a2 2 0 002 2h6a2 2 0 002-2v-3h1a2 2 0 002-2V9a2 2 0 00-2-2h-1V4a2 2 0 00-2-2H7a2 2 0 00-2 2zm3 0h4v3H8V4zm6 8H6v4h8v-4z" clip-rule="evenodd" /></svg>
+                <span>Print Ticket</span>
+            </button>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <!-- Customer Details... -->
+        </div>
+        <div>
+            <h3 class="text-xl font-semibold mb-2 border-t pt-4">Items Ordered</h3>
+            <ul class="space-y-2">
+                ${items.map(item => `
+                    <li class="flex justify-between items-center">
+                        <span><strong>${item.quantity}x</strong> ${item.name}</span>
+                        <span class="font-semibold">PKR ${item.price.toFixed(2)}</span>
+                    </li>
+                `).join('')}
+            </ul>
+            
+            <!-- This is where the pricing breakdown happens -->
+            <div class="mt-4 pt-4 border-t">
+                <div class="flex justify-between text-lg">
+                    <span>Subtotal:</span>
+                    <span>PKR ${subtotal.toFixed(2)}</span>
+                </div>
+
+                <!-- THE NEW DISCOUNT INFO IS INSERTED HERE -->
+                ${discountHTML}
+                <div class="flex justify-between font-bold text-2xl mt-2 pt-2 border-t final-total-line">
+    <span>Total Paid:</span>
+                    <span>PKR ${total_price.toFixed(2)}</span>
+                </div>
+            </div>
+        </div>
+        <div id="status-buttons" class="mt-8 pt-6 border-t"></div>
+    `;
+    detailsContent.querySelector('.grid').innerHTML = `
+        <div>
+            <h3 class="text-xl font-semibold mb-2">Customer Details</h3>
+            <p><strong>Name:</strong> ${customer.name}</p>
+            <p><strong>Phone:</strong> ${customer.phone}</p>
+            <p class="mt-2"><strong>Address:</strong><br>${customer.address.replace(/\n/g, '<br>')}</p>
+        </div>
+        <div>
+            <h3 class="text-xl font-semibold mb-2">Order Notes</h3>
+            <p><strong>Comments:</strong> ${customer.comments || 'None'}</p>
+            <p><strong>Cutlery:</strong> ${customer.wants_cutlery ? 'Yes' : 'No'}</p>
+        </div>
+    `;
+    generateStatusButtons(id, status);
+}
+    function generateStatusButtons(orderId, currentStatus) {
+        const buttonContainer = getEl('status-buttons');
+        if (!buttonContainer) return;
+        let buttonsHTML = '';
+        const buttonClasses = "w-full text-white font-semibold py-3 px-6 rounded-full transition duration-300";
+        if (currentStatus === 'Pending') {
+            buttonsHTML = `<button data-id="${orderId}" data-next-status="Preparing" class="status-btn bg-orange-500 hover:bg-orange-600 ${buttonClasses}">Accept & Prepare Order</button>`;
+        } else if (currentStatus === 'Preparing') {
+            buttonsHTML = `<button data-id="${orderId}" data-next-status="Completed" class="status-btn bg-blue-600 hover:bg-blue-700 ${buttonClasses}">Mark as Completed</button>`;
+        } else if (currentStatus === 'Completed') {
+            buttonsHTML = `<p class="text-center text-gray-500 font-semibold p-4 bg-gray-100 rounded-lg">This order is complete.</p>`;
+        }
+        buttonContainer.innerHTML = buttonsHTML;
+        document.querySelectorAll('.status-btn').forEach(button => {
+            button.addEventListener('click', handleStatusUpdate);
+        });
+    }
+    async function handleStatusUpdate(event) {
+    const button = event.currentTarget;
+    const orderId = button.dataset.id;
+    const nextStatus = button.dataset.nextStatus;
+    button.disabled = true;
+    button.textContent = 'Updating...';
+    const { error } = await db
+        .from('orders')
+        .update({ status: nextStatus })
+        .eq('id', orderId);
+
+    if (error) {
+        console.error("Status update failed:", error);
+        showToastNotification(`Error: ${error.message}`, 'error');
+        button.disabled = false;
+        button.textContent = `Failed to update. Retry?`; // Or revert to original text
+    } else {
+
+        showToastNotification(`Order #${orderId} is now ${nextStatus}!`, 'success');
+    }
+}
+ function handleSoundToggle() {
+    soundEnabled = !soundEnabled;
+    const desktopBtn = document.getElementById('sound-toggle-btn');
+    const mobileBtn = document.getElementById('sound-toggle-btn-mobile');
+
+    if (soundEnabled) {        
+        if (desktopBtn) {
+            desktopBtn.classList.replace('bg-red-500', 'bg-green-500');
+            desktopBtn.querySelector('#sound-on-icon').classList.remove('hidden');
+            desktopBtn.querySelector('#sound-off-icon').classList.add('hidden');
+            desktopBtn.querySelector('#sound-status-text').textContent = 'Sounds On';
+        }
+        if (mobileBtn) {
+            mobileBtn.classList.remove('bg-red-500'); // Remove red if it was there
+            mobileBtn.classList.add('bg-green-500', 'text-white');
+        }
+
+    } else {
+        if (desktopBtn) {
+            desktopBtn.classList.replace('bg-green-500', 'bg-red-500');
+            desktopBtn.querySelector('#sound-off-icon').classList.remove('hidden');
+            desktopBtn.querySelector('#sound-on-icon').classList.add('hidden');
+            desktopBtn.querySelector('#sound-status-text').textContent = 'Sounds Off';
+        }
+        if (mobileBtn) {
+            mobileBtn.classList.remove('bg-green-500');
+            mobileBtn.classList.add('bg-red-500', 'text-white');
+        }
+    }
+}
+     // ========= 5. EVENT LISTENERS SETUP =========
+    function setupEventListeners() {
+    if (loginForm) loginForm.addEventListener('submit', handleLogin);
+        if (soundToggleButton) { // The original desktop button
+        soundToggleButton.addEventListener('click', handleSoundToggle);
+    }
+    if (soundToggleButtonMobile) { // The new mobile button
+        soundToggleButtonMobile.addEventListener('click', handleSoundToggle);
+    }
+    if (logoutBtn) {
+    logoutBtn.addEventListener('click', handleLogout);
+}
+if (logoutBtnMobile) {
+    logoutBtnMobile.addEventListener('click', handleLogout);
+}
+    const filterButtons = queryAll('.filter-btn'); // Assuming this is for orders
+filterButtons.forEach(button => button.addEventListener('click', () => { activeFilter = button.dataset.status; filterOrders(); }));
+if (menuItemFilter) {
+    menuItemFilter.addEventListener('change', () => {
+        activeMenuFilter = menuItemFilter.value;
+        renderMenuList(); // Just re-render the list, DO NOT re-fetch
+    });
+}
+if (saveSpecialBtn) {
+    saveSpecialBtn.addEventListener('click', async () => {
+        const newMessage = specialMessageInput.value.trim();
+        const newIsActive = specialActiveToggle.checked;
+
+        const { error } = await db
+            .from('settings')
+            .update({ value: { message: newMessage, isActive: newIsActive } })
+            .eq('key', 'daily_special');
+            
+        if (error) {
+            showToastNotification('Error updating special.', 'error');
+        } else {
+            showToastNotification('Daily Special banner updated!', 'success');
+            currentSpecial = { message: newMessage, isActive: newIsActive };
+        }
+    });
+}
+    if (navOrdersBtn) navOrdersBtn.addEventListener('click', () => showPage('orders'));
+    if (navMenuBtn) navMenuBtn.addEventListener('click', () => showPage('menu'));
+    if (navAddonsBtn) navAddonsBtn.addEventListener('click', () => showPage('addons'));
+    if (navCouponsBtn) navCouponsBtn.addEventListener('click', () => showPage('coupons'));
+    if (navOrdersBtnMobile) navOrdersBtnMobile.addEventListener('click', () => showPage('orders'));
+if (navMenuBtnMobile) navMenuBtnMobile.addEventListener('click', () => showPage('menu'));
+if (navAddonsBtnMobile) navAddonsBtnMobile.addEventListener('click', () => showPage('addons'));
+if (navCouponsBtnMobile) navCouponsBtnMobile.addEventListener('click', () => showPage('coupons'));
+if (addNewAddonBtn) {
+    addNewAddonBtn.addEventListener('click', () => {
+        console.log("'+ Add New Addon' button was physically clicked!"); 
+        openAddonModal();
+    });
+}
+if (addonForm) addonForm.addEventListener('submit', handleSaveAddon);
+if (cancelAddonBtn) cancelAddonBtn.addEventListener('click', () => addonModal.classList.replace('flex', 'hidden'));
+if (addonList) {
+    addonList.addEventListener('click', (event) => {
+        const editButton = event.target.closest('.edit-addon-btn');
+        if (editButton) {
+            const addonId = editButton.dataset.id;
+            openAddonModal(addonId);
+        }
+        const deleteButton = event.target.closest('.delete-addon-btn');
+        if (deleteButton) {
+            const addonId = deleteButton.dataset.id;
+            handleDeleteAddon(addonId);
+        }
+    });
+}
+    if (addNewItemBtn) {
+    addNewItemBtn.addEventListener('click', () => {
+        console.log("'+ Add New Item' button was clicked!");
+        openItemModal();
+    });
+}
+    if (itemForm) itemForm.addEventListener('submit', handleFormSubmit);
+    if (cancelItemBtn) cancelItemBtn.addEventListener('click', () => itemModal.classList.replace('flex', 'hidden'));
+    if (addNewCategoryBtn) {
+    addNewCategoryBtn.addEventListener('click', handleAddNewCategory);
+}
+if (menuItemFilter) {
+    menuItemFilter.addEventListener('change', () => {
+        activeMenuFilter = menuItemFilter.value;
+        renderMenuList(); // Re-render the list with the new filter
+    });
+}
+if (statusToggleButton) {
+    statusToggleButton.addEventListener('click', handleRestaurantStatusToggle);
+}
+if (statusToggleButtonMobile) {
+    statusToggleButtonMobile.addEventListener('click', handleRestaurantStatusToggle);
+}
+    if (statusToggleButtonMobile) { // Using the new selector
+    statusToggleButtonMobile.addEventListener('click', async () => {
+        const newStatus = !currentRestaurantStatus; // The logic is identical
+        statusToggleButtonMobile.disabled = true; // Target the mobile button
+        
+        const { error } = await db
+            .from('settings')
+            .update({ value: { isOpen: newStatus } })
+            .eq('key', 'restaurant_status');
+
+        if (error) {
+            alert("Failed to update status.");
+            console.error("Status update error:", error);
+        } else {
+            currentRestaurantStatus = newStatus;
+            updateStatusButtonUI(); // This will update both buttons
+            showToastNotification(`Restaurant is now ${newStatus ? 'OPEN' : 'CLOSED'}`);
+        }
+        
+        statusToggleButtonMobile.disabled = false; // Re-enable the mobile button
+    });
+}
+if (categoryList) {
+    categoryList.addEventListener('click', (event) => {
+        const deleteButton = event.target.closest('.delete-category-btn');
+        if (deleteButton) {
+            const categoryId = deleteButton.dataset.id;
+            handleDeleteCategory(categoryId);
+        }
+    });
+}
+    if (addNewCouponBtn) addNewCouponBtn.addEventListener('click', () => openCouponModal());
+    if (couponForm) couponForm.addEventListener('submit', handleSaveCoupon);
+    if (cancelCouponBtn) cancelCouponBtn.addEventListener('click', () => couponModal.classList.replace('flex', 'hidden'));
+    if (couponList) {
+        couponList.addEventListener('click', (event) => {
+            const editBtn = event.target.closest('.edit-coupon-btn');
+            if (editBtn) openCouponModal(editBtn.dataset.id);
+            const deleteBtn = event.target.closest('.delete-coupon-btn');
+            if (deleteBtn) handleDeleteCoupon(deleteBtn.dataset.id);
+        });
+    }
+detailsContent.addEventListener('click', (event) => {
+    if (event.target.closest('#print-ticket-btn')) {
+        window.print();
+    }
+});
+    menuManagementList.addEventListener('click', (event) => {
+    const editButton = event.target.closest('.edit-item-btn');
+    if (editButton) {
+        openItemModal(editButton.dataset.id);
+        return; // Stop after handling the edit click
+    }
+const fileInput = getEl('item-image-file');
+if (fileInput) {
+    fileInput.addEventListener('change', () => {
+        const imagePreview = getEl('item-image-preview');
+        const fileNameDisplay = getEl('file-name-display');
+        if (fileInput.files && fileInput.files.length > 0) {
+            const file = fileInput.files[0];
+            // Create a temporary URL to preview the image
+            imagePreview.src = URL.createObjectURL(file);
+            fileNameDisplay.textContent = file.name;
+        } else {
+            // If the user cancels, revert to the original image if available
+            const hiddenImageUrl = getEl('item-image-url-hidden');
+            imagePreview.src = hiddenImageUrl.value || 'https://via.placeholder.com/150';
+            fileNameDisplay.textContent = 'No new file chosen.';
+        }
+    });
+} 
+    // Add this new part to handle the delete button
+    const deleteButton = event.target.closest('.delete-item-btn');
+    if (deleteButton) {
+        handleDeleteMenuItem(deleteButton.dataset.id);
+        return; // Stop after handling the delete click
+    }
+});
+    menuManagementList.addEventListener('change', (event) => {
+        const availabilityToggle = event.target.closest('.availability-toggle');
+        if (availabilityToggle) {
+            handleAvailabilityToggle(availabilityToggle);
+        }
+    });
+}
+    setupEventListeners();
+});
+</script>
+</body>
+</html>
