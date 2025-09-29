@@ -201,24 +201,6 @@ body {
                 <div class="bg-white p-6 rounded-lg shadow-lg flex items-center justify-between"><div><p class="text-sm font-medium text-gray-500">Total Sales Today</p><p id="stat-sales-today" class="text-3xl font-bold text-blue-600">PKR 0</p></div><div class="bg-blue-100 p-3 rounded-full"><svg class="h-8 w-8 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v.01" /></svg></div></div>
             </div>
         </section>
-        <section id="daily-special-controls" class="bg-white p-6 rounded-lg shadow-lg">
-    <div class="flex items-center justify-between border-b pb-4 mb-4">
-        <h3 class="text-2xl font-bold">Daily Special Banner</h3>
-        <!-- The On/Off Toggle Switch -->
-        <label class="flex items-center cursor-pointer">
-            <div class="relative">
-                <input type="checkbox" id="special-active-toggle" class="sr-only">
-                <div class="block bg-gray-600 w-14 h-8 rounded-full"></div>
-                <div class="dot absolute left-1 top-1 bg-white w-6 h-6 rounded-full transition"></div>
-            </div>
-        </label>
-    </div>
-    <div class="form-group">
-        <label for="special-message-input" class="font-semibold">Banner Message:</label>
-        <input type="text" id="special-message-input" placeholder="e.g., Taco Tuesday: 2-for-1 Tacos!" class="w-full p-2 border rounded-md">
-    </div>
-    <button id="save-special-btn" class="mt-4 bg-blue-600 text-white font-semibold py-2 px-6 rounded-lg hover:bg-blue-700">Update Banner</button>
-</section>
         <div id="page-container">
             <div id="orders-page">
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -243,7 +225,7 @@ body {
             </div>
 <div id="menu-page" class="hidden">
             <div class="bg-white p-6 rounded-lg shadow-lg mb-6">
-                <h2 class="text-3xl font-bold border-b pb-4 mb-4">Manage Categories</h2>
+                <h2 class="text-2xl font-bold border-b pb-4 mb-4">Manage Categories</h2>
                 <div id="category-list" class="space-y-2 mb-4">
                 </div>
                 <div class="flex space-x-2">
@@ -273,9 +255,9 @@ body {
         <div id="addons-page" class="hidden">
             <div class="bg-white p-6 rounded-lg shadow-lg">
                 <div class="flex justify-between items-center border-b pb-4 mb-4">
-                    <h2 class="text-3xl font-bold">Manage Addons</h2>
+                    <h2 class="text-2xl font-bold">Manage Addons</h2>
                     <button id="add-new-addon-btn" class="bg-green-500 text-white font-semibold py-2 px-4 rounded-lg hover:bg-green-600 whitespace-nowrap">
-                        + Add New Addon
+                        + Add Addon
                     </button>
                 </div>
                 <div id="addon-list" class="divide-y divide-gray-200">
@@ -284,11 +266,29 @@ body {
             </div>
         </div>
     </div><div id="coupons-page" class="hidden">
+        <section id="daily-special-controls" class="bg-white p-6 rounded-lg shadow-lg mb-6">
+    <div class="flex items-center justify-between border-b pb-4 mb-4">
+        <h3 class="text-2xl font-bold">Daily Special Banner</h3>
+        <!-- The On/Off Toggle Switch -->
+        <label class="flex items-center cursor-pointer">
+            <div class="relative">
+                <input type="checkbox" id="special-active-toggle" class="sr-only">
+                <div class="block bg-gray-600 w-14 h-8 rounded-full"></div>
+                <div class="dot absolute left-1 top-1 bg-white w-6 h-6 rounded-full transition"></div>
+            </div>
+        </label>
+    </div>
+    <div class="form-group">
+        <label for="special-message-input" class="font-semibold">Banner Message:</label>
+        <input type="text" id="special-message-input" placeholder="e.g., Taco Tuesday: 2-for-1 Tacos!" class="w-full p-2 border rounded-md">
+    </div>
+    <button id="save-special-btn" class="mt-4 bg-blue-600 text-white font-semibold py-2 px-6 rounded-lg hover:bg-blue-700">Update Banner</button>
+</section>
     <div class="bg-white p-6 rounded-lg shadow-lg">
         <div class="flex justify-between items-center border-b pb-4 mb-4">
-            <h2 class="text-3xl font-bold">Manage Coupons</h2>
+            <h2 class="text-2xl font-bold">Manage Coupons</h2>
             <button id="add-new-coupon-btn" class="bg-green-500 text-white font-semibold py-2 px-4 rounded-lg hover:bg-green-600 whitespace-nowrap">
-                + Add New Coupon
+                + Add Coupon
             </button>
         </div>
         <div id="coupon-list" class="divide-y divide-gray-200">
@@ -296,7 +296,6 @@ body {
         </div>
     </div>
 </div>
-
 <!-- ======================= COUPON MODAL ======================= -->
 <div id="coupon-modal" class="fixed inset-0 bg-gray-900 bg-opacity-75 hidden items-center justify-center z-[100] p-4">
     <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
