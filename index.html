@@ -816,12 +816,9 @@ const sendOrderReceiptBtn = getEl('send-order-receipt-btn');
 const showReceiptBtn = getEl('show-receipt-btn');
 const confirmOrderBtn = getEl('confirm-order-btn');
 const cancelOrderBtn = getEl('cancel-order-btn');
-const stickyCartBtn = getEl('sticky-cart-button');
-const stickyCartCount = getEl('sticky-cart-count');
-const stickyCartTotal = getEl('sticky-cart-total');
-        const quickViewModal = getEl('quick-view-modal');
-        const closeQuickViewBtn = getEl('close-quick-view');
-        const quickViewOptions = getEl('quick-view-options');
+const quickViewModal = getEl('quick-view-modal');
+const closeQuickViewBtn = getEl('close-quick-view');
+const quickViewOptions = getEl('quick-view-options');
 const recentOrdersContainer = getEl('recent-orders-container');
 const mobileCloseQuickViewBtn = getEl('mobile-close-quick-view');
 const congratsModal = getEl('congrats-modal');
@@ -1362,11 +1359,6 @@ if (cancelQueueBtn) {
     }
     if (saveReceiptBtn) saveReceiptBtn.addEventListener('click', saveReceiptAsImage);
     if (recentOrdersContainer) recentOrdersContainer.addEventListener('click', handleOrderAgain);
-
-    if (stickyCartBtn) {
-        window.addEventListener('scroll', handleScroll);
-        stickyCartBtn.addEventListener('click', () => { cartButton.click(); });
-    }
 }
 if (addonModal) {
     addonModal.addEventListener('click', handleAddonInteraction);
@@ -1517,22 +1509,10 @@ function closeCongratsModal() {
     
     congratsModal.classList.remove('visible');
 }
-function handleScroll() {
-    if (!stickyCartBtn) return;
-    const scrollPosition = window.scrollY;
-    const showThreshold = 150;
-    if (scrollPosition > showThreshold && cart.length > 0) {
-        stickyCartBtn.classList.add('visible');
-    } else {
-        stickyCartBtn.classList.remove('visible');
-    }
-}
 function saveOrderToHistory(orderId, accessToken) { // <-- Now accepts accessToken
     if (!lastSuccessfulOrderForReceipt) return;
     const pastOrders = JSON.parse(localStorage.getItem('pixelTalesPastOrders')) || [];
-    
-    // Create a new, more detailed order object that includes the token
-    const newOrder = {
+        const newOrder = {
         id: orderId,
         accessToken: accessToken, // The secret key for this order
         date: new Date().toLocaleDateString(),
@@ -1545,7 +1525,6 @@ function saveOrderToHistory(orderId, accessToken) { // <-- Now accepts accessTok
     const recentThreeOrders = pastOrders.slice(0, 3);
     localStorage.setItem('pixelTalesPastOrders', JSON.stringify(recentThreeOrders));
     
-    // Refresh the UI and start listening for updates on the new order
     renderRecentOrders();
     listenForOrderStatusChanges();
 }
@@ -1582,19 +1561,16 @@ function renderRecentOrders() {
         }).join('');
     }
 }
-let orderStatusChannels = []; // Use an array to manage multiple subscriptions
+let orderStatusChannels = []; 
 
 function listenForOrderStatusChanges() {
     const pastOrders = JSON.parse(localStorage.getItem('pixelTalesPastOrders')) || [];
     if (pastOrders.length === 0) return;
 
-    // First, unsubscribe from all old channels to prevent duplicates
     if (orderStatusChannels.length > 0) {
-    db.removeChannel(...orderStatusChannels); // Use removeChannel (singular) with spread syntax
+    db.removeChannel(...orderStatusChannels);
     orderStatusChannels = [];
 }
-    // --- THE SECURE MAGIC IS HERE ---
-    // Create a separate, secure channel FOR EACH order
     pastOrders.forEach(order => {
         const channel = db.channel(`public:orders:id=eq.${order.id}`)
             .on('postgres_changes', 
@@ -1602,21 +1578,17 @@ function listenForOrderStatusChanges() {
                     event: 'UPDATE', 
                     schema: 'public', 
                     table: 'orders',
-                    // This filter is KEY: it's now part of the channel definition itself,
-                    // which makes it secure on the server.
                     filter: `id=eq.${order.id}` 
                 }, 
                 (payload) => {
                     const updatedOrder = payload.new;
 
-                    // Update localStorage
                     const currentOrders = JSON.parse(localStorage.getItem('pixelTalesPastOrders')) || [];
                     const orderIndex = currentOrders.findIndex(o => o.id === updatedOrder.id);
                     if (orderIndex > -1) {
                         currentOrders[orderIndex].status = updatedOrder.status;
                         localStorage.setItem('pixelTalesPastOrders', JSON.stringify(currentOrders));
 
-                        // Update the UI
                         const statusBadgeContainer = getEl(`status-for-order-${updatedOrder.id}`);
                         if (statusBadgeContainer) {
                             statusBadgeContainer.innerHTML = getStatusBadge(updatedOrder.status);
@@ -1649,9 +1621,9 @@ function handleOrderAgain(e) {
 function addToCart(name, price, id, clickedButton = null, quantity = 1) { 
     const existingItem = cart.find(item => item.id === id); 
     if (existingItem) { 
-        existingItem.quantity += quantity; // Add the new quantity
+        existingItem.quantity += quantity;
     } else { 
-        cart.push({ id, name, price, quantity: quantity }); // Start with the new quantity
+        cart.push({ id, name, price, quantity: quantity });
     } 
     
     updateCartUI(); 
@@ -1679,9 +1651,6 @@ function updateCartUI() {
         cartEmptyMessage.style.display = 'block'; 
         clearCartBtn.style.display = 'none'; 
         getEl('show-receipt-btn').classList.add('opacity-50', 'cursor-not-allowed');
-        if (stickyCartBtn) stickyCartBtn.classList.remove('visible');
-        
-        // Clear coupon if cart is emptied
         appliedCoupon = null; 
         if(couponCodeInput) couponCodeInput.value = '';
         if(couponFeedback) couponFeedback.textContent = '';
@@ -1697,7 +1666,6 @@ function updateCartUI() {
             const itemElement = document.createElement('div');
             itemElement.className = 'flex flex-col sm:flex-row justify-between items-start sm:items-center py-4 border-b border-gray-200'; 
             
-            // This is your original item rendering code
             itemElement.innerHTML = `
                 <div class="mb-2 sm:mb-0">
                     <span class="font-bold text-lg text-gray-800">${item.name}</span>
@@ -1717,9 +1685,7 @@ function updateCartUI() {
             cartItemsContainer.appendChild(itemElement); 
         }); 
     } 
-    
-    // --- NEW DISCOUNT LOGIC ---
-    let discountAmount = 0;
+        let discountAmount = 0;
     let finalTotal = subtotal;
 
     if (appliedCoupon && subtotal > 0) {
@@ -1732,7 +1698,6 @@ function updateCartUI() {
     } else {
         discountRow.classList.add('hidden');
         totalHr.classList.add('hidden');
-        // If the coupon is no longer valid (e.g., cart is empty), clear it
         if (subtotal === 0) {
             appliedCoupon = null;
         }
@@ -1740,14 +1705,7 @@ function updateCartUI() {
 
     cartSubtotal.textContent = `PKR ${subtotal.toFixed(2)}`;
     cartTotalSpan.textContent = `PKR ${finalTotal.toFixed(2)}`; 
-    cartCountSpan.textContent = itemCount; 
-    
-    if (stickyCartBtn) {
-        stickyCartCount.textContent = `${itemCount} Item${itemCount !== 1 ? 's' : ''}`;
-        stickyCartTotal.textContent = `PKR ${finalTotal.toFixed(2)}`; // Use final total here too
-        handleScroll();
-    }
-    
+    cartCountSpan.textContent = itemCount;     
     saveCart(); 
 }
         function handleCartQuantityChange(e) {
@@ -1775,8 +1733,6 @@ function updateRibbonUI(isOpen) {
     isRestaurantOpen = isOpen;
     const statusRibbon = document.getElementById('status-ribbon');
     const ribbonTextSegments = document.querySelectorAll('.ribbon-text-segment');
-
-    // Safety check
     if (!statusRibbon || ribbonTextSegments.length === 0) return;
 
     let message = '';
@@ -1923,7 +1879,6 @@ async function openRegularItemModal(item) {
     optionsContainer.innerHTML = '';
     getEl('qv-quantity').textContent = '1';
     
-    // Un-hide the footer for regular items
     const footer = quickViewModal.querySelector('.border-t');
     if (footer) footer.style.display = 'block';
 
@@ -1998,9 +1953,6 @@ function buildAddonAccordionUI(category, title, options, allowMultiple = false, 
     
     const inputType = allowMultiple ? 'checkbox' : 'radio';
     let optionsHTML = '';
-
-    // --- [THE FIX IS HERE] ---
-    // If it's a single-choice group (radio), add a "None" option first.
     if (!allowMultiple) {
         const uniqueId = `addon-${category}-none`;
         optionsHTML += `
@@ -2012,9 +1964,6 @@ function buildAddonAccordionUI(category, title, options, allowMultiple = false, 
             </div>
         `;
     }
-    // --- End of Fix ---
-
-    // Now, build the rest of the options as before
     options.forEach((option) => {
         const uniqueId = `addon-${category}-${option.id}`;
         optionsHTML += `
@@ -2027,7 +1976,6 @@ function buildAddonAccordionUI(category, title, options, allowMultiple = false, 
             </div>
         `;
     });
-
     const accordionHTML = `
         <div class="addon-accordion-card" data-category="${category}">
             <div class="addon-header">
@@ -2112,7 +2060,6 @@ if (addToCartBtn) {
     });
         
         const finalName = nameParts.join(', ');
-        // --- End of Fix ---
         
         const pricePerItem = finalPrice / finalQuantity;
         const uniqueComboId = btoa(finalName); // Use the final name for a truly unique ID
@@ -2129,7 +2076,6 @@ if (addToCartBtn) {
     const searchTerm = searchBar.value.toLowerCase().trim();
     let visibleItemCount = 0;
     
-    // [THE FIX] Use the array of HTML elements for filtering
     allMenuItemElements.forEach(card => {
         const categoryMatch = currentCategory === '' || card.dataset.category === currentCategory;
         const name = card.dataset.name.toLowerCase();
@@ -2149,17 +2095,13 @@ if (addToCartBtn) {
         let visibleItems = allMenuItemElements.filter(item => !item.classList.contains('hidden'));
         
         visibleItems.sort((elementA, elementB) => {
-            // Get the ID from each HTML element
             const idA = elementA.dataset.id;
             const idB = elementB.dataset.id;
 
-            // Find the corresponding full data object in our raw data array
             const itemDataA = allMenuItemsData.find(item => item.id == idA);
             const itemDataB = allMenuItemsData.find(item => item.id == idB);
 
             if (!itemDataA || !itemDataB) return 0; // Safety check if data is missing
-
-            // For pizzas, use the price of the first  size. For others, use their standard price.
             const priceA = itemDataA.sizes ? Object.values(itemDataA.sizes)[0] : itemDataA.price;
             const priceB = itemDataB.sizes ? Object.values(itemDataB.sizes)[0] : itemDataB.price;
 
@@ -2179,28 +2121,22 @@ if (addToCartBtn) {
                 <button id="close-quick-view" class="absolute top-2 right-6 bg-white rounded-full p-2 border-2 hover:bg-orange-300 border-orange-500 hover:border-orange-500 transition duration-200 z-20">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-700 hover:text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
         </button>
-        <!-- Main Scrollable Area -->
         <div class="flex-grow overflow-y-auto">      
-            <!-- Image Container (for REGULAR items) -->
             <div id="qv-regular-image-container" class="relative p-4 rounded-lg">
                 <img id="quick-view-image" src="" alt="Quick view of menu item" class="w-full h-auto max-h-48 md:max-h-80 object-contain rounded-lg">
-                <!-- The button is no longer here -->
             </div>       
             <div class="p-4">
-                <!-- Pizza Image Header (hidden by default) -->
                 <div id="qv-pizza-image-header" class="hidden text-center pb-4 mb-4">
                     <img id="qv-pizza-image" src="" alt="Pizza" class="w-full h-auto max-h-48 md:max-h-80 object-contain rounded-lg">
                 </div>
                 <h3 id="quick-view-title" class="text-2xl md:text-3xl font-bold mb-1"></h3>
                 <p id="quick-view-description" class="text-sm text-gray-600 mb-4"></p>
-                <!-- Quantity for Main Item -->
                 <div id="qv-main-quantity-controls" class="flex items-center justify-center space-x-4 my-4">
                     <button id="qv-decrease-qty" class="quantity-btn-outline text-2xl">-</button>
                     <span id="qv-quantity" class="text-3xl font-bold w-16 text-center">1</span>
                     <button id="qv-increase-qty" class="quantity-btn-outline text-2xl">+</button>
                 </div>
             </div>
-            <!-- Add-ons Container -->
             <div id="quick-view-options" class="px-4 pb-4 space-y-3"></div>
         </div>
         <!-- Sticky Footer -->
@@ -2245,21 +2181,6 @@ if (addToCartBtn) {
 <div class="mt-4 text-center">
     <button id="save-receipt-btn" class="w-full bg-green-600 text-white font-semibold py-3 px-6 rounded-full hover:bg-green-700 transition">Download Receipt Image</button>
 </div>
-        </div>
-    </div>
-</div>
-<div id="sticky-cart-button" class="sticky-cart-container pulse-btn">
-    <div class="flex justify-between items-center w-full">
-        <div>
-            <span id="sticky-cart-count" class="font-bold">0 Items</span>
-            <span class="mx-2">|</span>
-            <span id="sticky-cart-total" class="font-semibold">PKR 0.00</span>
-        </div>
-        <div class="flex items-center">
-            <span>View Order</span>
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-2" viewBox="0 0 20 20" fill="currentColor">
-                <path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd" />
-            </svg>
         </div>
     </div>
 </div>
